@@ -1,6 +1,5 @@
 from marker_generator.marker_generator import generate_marker
 from random import randint
-import logging
 import argparse
 
 
@@ -13,6 +12,15 @@ def parser():
 
 def rand_department():
     return str(randint(0, 9999))
+
+
+def rand_ip():
+    return f'/{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
+
+
+def rand_hw():
+    ch = "0123456789abcdefghijklmnopqrstuvwxyz"
+    return f'{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}'
 
 
 def rand_disk():
@@ -30,7 +38,7 @@ def rand_domain():
     return ''.join([ch[randint(0, 25)] for _ in range(3)])
 
 
-def random_marker():
+def rand_marker():
     department = rand_department()
     root_disk_serial = rand_disk()
     user = rand_user()
@@ -40,17 +48,16 @@ def random_marker():
 
 def perpetual_markers():
     while True:
-        print(random_marker())
+        print(rand_marker())
 
 
 def limit_markers(n):
     for i in range(n):
-        print(random_marker())
+        print(rand_marker())
 
 
 if __name__ == "__main__":
     n = parser()
     limit_markers(n)
-    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-    logging.info(msg="info log msg")
+    print(rand_hw())
 
