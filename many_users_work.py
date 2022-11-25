@@ -20,8 +20,8 @@ LOG2FIELD = {
 
 
 DB_URL = 'http://10.11.20.98:8123'
-CONNECTED_INT = 10
-ROWS_NUM = 100
+CONNECTED_INT = 1
+ROWS_NUM = 1
 
 
 def gen_rows():
@@ -36,6 +36,7 @@ def gen_rows():
         row['ipv4_address'] = rm.rand_ip()
         row['hw_address'] = rm.rand_hw()
         rows.append(row)
+    return rows
 
 
 
@@ -75,7 +76,8 @@ class DMSpectator:
         '''
         Массовая отправка блока записей.
         '''
-        rows = gen_rows() 
+        rows = gen_rows()
+        print(rows) 
         try:
             self.db.insert(rows)
             return True
