@@ -39,12 +39,10 @@ class DMSpectator:
                 db_url=DB_URL,
                 username=uname_,
                 password=pass_)
-            
-
             return True
         except Exception as ex_:
-            return False
-
+            print("Подключение не удалось")
+        return False
 
 def main():
     dms = DMSpectator()
