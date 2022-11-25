@@ -1,11 +1,13 @@
 import datetime
+import time
 import random_marker as rm
 import infi.clickhouse_orm as ico
+from random import randint
 
 
 LOG2FIELD = {
-    'dtm': 'timestamp',
-    'dt': lambda row: row.timestamp[:10],
+    'dtm': lambda _: datetime.datetime.utcnow(),
+    'dt': lambda _: datetime.datetime.utcnow(),
     'report_time': lambda _: datetime.datetime.utcnow(),
     'user_name': 'user',
     'user_domain': 'domain',
@@ -18,6 +20,23 @@ LOG2FIELD = {
 
 
 DB_URL = 'http://10.11.20.98:8123'
+CONNECTED_INT = 10
+ROWS_NUM = 100
+
+
+def gen_rows():
+    rows = []
+    for i in range(ROWS_NUM):
+        row = LOG2FIELD
+        row['user_name'] = rm.rand_user()
+        row['user_domain'] = rm.rand_domain()
+        row['marker'] = rm.rand_marker()
+        row['department'] = rm.rand_department()
+        row['root_disk_serial'] = rm.rand_disk()
+        row['ipv4_address'] = rm.rand_ip()
+        row['hw_address'] = rm.rand_hw()
+        rows.append(row)
+
 
 
 class DMSpectator:
@@ -39,14 +58,35 @@ class DMSpectator:
                 db_url=DB_URL,
                 username=uname_,
                 password=pass_)
+            print("ОК")
             return True
         except Exception as ex_:
             print("Подключение не удалось")
         return False
 
+    def process(self):
+        self.connected = False
+        while not self.connected:
+            self.connected = self.connect()
+            if not self.connected:
+                time.sleep(CONNECTED_INT)
+    
+    def push_update(self):
+        '''
+        Массовая отправка блока записей.
+        '''
+        rows = gen_rows() 
+        try:
+            self.db.insert(rows)
+            return True
+        except Exception as ex_:
+            return False
+
+
 def main():
     dms = DMSpectator()
-    print(dms.connect())
+    dms.process()
+    print(dms.push_update())
     return 0
 
 
