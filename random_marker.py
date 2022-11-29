@@ -5,37 +5,39 @@ import argparse
 
 def parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('n', type=int, help='Input dir for source image')
+    parser.add_argument('n', type=int)
     args = parser.parse_args()
     return args.n
 
 
 def rand_department():
-    return str(randint(0, 9999))
+    return str(randint(1, 65536))
 
 
 def rand_ip():
     return f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
 
-
+# Среди трех основных производителей самый длинный номер = 12 
 def rand_hw():
-    ch = "0123456789abcdefghijklmnopqrstuvwxyz"
-    return f'{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}:{ch[randint(0, 35)]}{ch[randint(0, 35)]}'
-
+    ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    return ''.join([ch[randint(0, 35)] for _ in range(12)])
+    
 
 def rand_disk():
-    ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    return ''.join([ch[randint(0, 35)] for _ in range(15)])
+    ch = "с"
+    return ''.join([ch[randint(0, 35)] for _ in range(20)])
 
 
+# Поставила до 100 символов
 def rand_user():
-    ch = "abcdefghijklmnopqrstuvwxyz"
-    return ''.join([ch[randint(0, 25)] for _ in range(randint(0, 20))])
+    ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    return ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
 
 
+# Поставила до 100 символов
 def rand_domain():
-    ch = "abcdefghijklmnopqrstuvwxyz"
-    return ''.join([ch[randint(0, 25)] for _ in range(3)])
+    ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    return ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
 
 
 def rand_marker(department, root_disk_serial, user, domain):
@@ -53,6 +55,7 @@ def limit_markers(n):
 
 
 if __name__ == "__main__":
-    n = parser()
-    limit_markers(n)
+     n = parser()
+     limit_markers(n)
+
 
