@@ -5,39 +5,36 @@ import infi.clickhouse_orm as ico
 from random import randint
 
 
-LOG2FIELD = {
-    'dtm': lambda _: datetime.datetime.utcnow(),
-    'dt': lambda _: datetime.datetime.utcnow(),
-    'report_time': lambda _: datetime.datetime.utcnow(),
-    'user_name': 'user',
-    'user_domain': 'domain',
-    'marker': 'marker',
-    'department': 'department',
-    'root_disk_serial': 'root_disk_serial',
-    'ipv4_address': 'ip_addr',
-    'hw_address': 'hw_addr'
-}
-
-
 DB_URL = 'http://10.11.20.98:8123'
 CONNECTED_INT = 1
 ROWS_NUM = 1
 
 
+class Row(ico.Model):
+    user_name = ico.StringField()
+    user_domain = ico.StringField()
+    marker = ico.StringField()
+    department = ico.StringField()
+    root_disk_serial = ico.StringField()
+    ipv4_address = ico.StringField()
+    hw_address = ico.StringField()
+
+
 def gen_rows():
     rows = []
     for i in range(ROWS_NUM):
-        row = LOG2FIELD
-        row['user_name'] = rm.rand_user()
-        row['user_domain'] = rm.rand_domain()
-        row['marker'] = rm.rand_marker()
-        row['department'] = rm.rand_department()
-        row['root_disk_serial'] = rm.rand_disk()
-        row['ipv4_address'] = rm.rand_ip()
-        row['hw_address'] = rm.rand_hw()
+        user_name = rm.rand_user()
+        user_domain = rm.rand_domain()
+        department = rm.rand_domain()
+        root_disk_serial = rm.rand_disk()
+        marker = rm.rand_marker(department, root_disk_serial, user_name, user_domain)
+        ipv4_address = rm.rand_ip()
+        hw_address = rm.rand_hw()
+        row = Row(user_name=user_name, user_domain=user_domain,\
+             department=department, root_disk_serial=root_disk_serial,\
+                 marker=marker, ipv4_address=ipv4_address, hw_address=hw_address)
         rows.append(row)
     return rows
-
 
 
 class DMSpectator:
