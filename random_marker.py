@@ -15,7 +15,7 @@ def rand_department():
 
 
 def rand_ip():
-    return f'/{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
+    return f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
 
 
 def rand_hw():
