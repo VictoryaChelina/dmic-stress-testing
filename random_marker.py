@@ -24,7 +24,7 @@ def rand_hw():
     
 
 def rand_disk():
-    ch = "с"
+    ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     return ''.join([ch[randint(0, 35)] for _ in range(20)])
 
 
