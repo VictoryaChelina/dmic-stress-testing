@@ -42,7 +42,8 @@ def rand_domain():
 
 #  Screenmark или printmark
 def rand_operation():
-    return 1 if random() < 0.95 else 2
+    return "SCREEN" if random() < 0.95 else "PRINT"
+
 
 def rand_marker(department, root_disk_serial, user, domain):
     return generate_marker(department, root_disk_serial, user, domain)
