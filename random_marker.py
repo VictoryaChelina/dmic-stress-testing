@@ -1,5 +1,5 @@
 from marker_generator.marker_generator import generate_marker
-from random import randint
+from random import randint, random
 import argparse
 
 
@@ -39,6 +39,10 @@ def rand_domain():
     ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     return ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
 
+
+#  Screenmark или printmark
+def rand_operation():
+    return 1 if random() < 0.95 else 2
 
 def rand_marker(department, root_disk_serial, user, domain):
     return generate_marker(department, root_disk_serial, user, domain)
