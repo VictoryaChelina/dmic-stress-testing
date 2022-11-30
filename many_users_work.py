@@ -7,8 +7,8 @@ from random import randint
 
 
 DB_URL = 'http://10.11.20.98:8123'
-CONNECTED_INT = 1
-ROWS_NUM = 1
+CONNECTED_INT = 10
+ROWS_NUM = 1000
 BATCH_SIZE = 100
 
 
