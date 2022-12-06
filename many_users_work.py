@@ -35,7 +35,7 @@ TIME_FACT = 1  # Промежутки между фактами маркиров
 У 1 млн пользователей постоянно отсылаются логи. Значит по 6 строчек от каждого в минуту.
 Получается 6 млн строк в минуту от всех.
 А в реальности даже лучше, т.к. нет каких-то общих часов,
-по которым спектраторы на всех пользователях одновременно бы отправили свои 6 логов. 
+по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
 '''
 
 ROWS_NUM = 5  # Количество генерируемых строк от одного пользователя
@@ -100,6 +100,22 @@ def gen_rows_one_user():
     return rows_one_user
 
 
+# Генератор файла screenmark_log
+def one_user_screen_log():
+    with open("screenmark_log", "w") as log:
+        rows = gen_rows_one_user()
+        for row in rows:
+            log.write(
+                f'{str(row.dtm)[:19]},{str(row.dtm)[20:23]} - event_api.py: INFO - screen-marking;' +
+                f'{row.user_name};' + 
+                f'{row.user_domain};' +
+                f'{row.marker};' +
+                f'{row.department};' +
+                f'{row.root_disk_serial};' + 
+                f'{row.ipv4_address};' +
+                f'{row.hw_address}' + '\n')
+
+
 # Класс отправки псевдологов
 class DMSpectator:
     LOGFILE = 'dmspectator_log'
@@ -141,9 +157,10 @@ class DMSpectator:
 
 
 def main():
-    dms = DMSpectator()
-    dms.process()
-    print(dms.push_update())
+    # dms = DMSpectator()
+    # dms.process()
+    # print(dms.push_update())
+    one_user_screen_log()
     return 0
 
 
