@@ -40,13 +40,13 @@ def rand_domain():
     return ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
 
 
-#  Screenmark или printmark
-def rand_operation():
-    return "SCREEN" if random() < 0.95 else "PRINT"
-
-
 def rand_marker(department, root_disk_serial, user, domain):
     return generate_marker(department, root_disk_serial, user, domain)
+
+
+def rand_folder():
+    ch = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    return ''.join([ch[randint(0, 25)] for _ in range(7)])
 
 
 def perpetual_markers():

@@ -1,5 +1,6 @@
 import datetime
 import time
+import os
 import random_marker as rm
 import infi.clickhouse_orm as ico
 from infi.clickhouse_orm.fields import IPv4Field
@@ -39,8 +40,8 @@ TIME_FACT = 1  # Промежутки между фактами маркиров
 '''
 
 ROWS_NUM = 5  # Количество генерируемых строк от одного пользователя
-USERS_NUM = 2 # Количество пользователей
-BATCH_SIZE = 4  # Количество строк отправляемых за одну загрузку (в оригинале 100)
+USERS_NUM = 1 # Количество пользователей
+BATCH_SIZE = 5  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 
 
 #Operation = Enum('Operation', ['SCREEN', 'PRINT'])
@@ -73,6 +74,7 @@ def gen_users():
 
 # Генератор рандомных строк для таблиц screenmarkfact (один пользователь)
 # report_time нужно изменить далее
+# @profile
 def gen_rows_one_user():
     rows_one_user = []
     user_name = rm.rand_user()
@@ -96,17 +98,41 @@ def gen_rows_one_user():
             hw_address=hw_address)
             #operation_type = Operation.SCREEN if random() < 0.95 else Operation.PRINT)
         rows_one_user.append(row)
-        time.sleep(TIME_FACT)
+        # time.sleep(TIME_FACT)
     return rows_one_user
+
+
+def make_path():
+    path = os.getcwd()
+    path = os.mkdir(path + f'\\log\\{str(rm.rand_folder())}\\')
+    return str(path)
 
 
 # Генератор файла screenmark_log
 def one_user_screen_log():
-    with open("screenmark_log", "w") as log:
+    path = make_path()
+    with open(path + "screenmark_log", "w") as log:
         rows = gen_rows_one_user()
         for row in rows:
             log.write(
                 f'{str(row.dtm)[:19]},{str(row.dtm)[20:23]} - event_api.py: INFO - screen-marking;' +
+                f'{row.user_name};' + 
+                f'{row.user_domain};' +
+                f'{row.marker};' +
+                f'{row.department};' +
+                f'{row.root_disk_serial};' + 
+                f'{row.ipv4_address};' +
+                f'{row.hw_address}' + '\n')
+
+
+# Генератор файла printmark_log
+def one_user_print_log():
+    path = make_path()
+    with open(path + "screenmark_log", "w") as log:
+        rows = gen_rows_one_user()
+        for row in rows:
+            log.write(
+                f'{str(row.dtm)[:19]},{str(row.dtm)[20:23]} - event_api.py: INFO - print-marking;' + #  надо уточнить (посмотреть в printmark_log)
                 f'{row.user_name};' + 
                 f'{row.user_domain};' +
                 f'{row.marker};' +
@@ -146,21 +172,22 @@ class DMSpectator:
                 time.sleep(CONNECTED_INT)
     
     # Отправка псевдологов
+    # @profile
     def push_update(self):
         rows = gen_users()
-        print("Отправка логов") 
-        try:
-            rc = self.db.insert(rows, BATCH_SIZE)
-            return True
-        except Exception as ex_:
-            return False
+        print("Отправка логов")
+        self.db.insert(rows, BATCH_SIZE)
 
 
 def main():
-    # dms = DMSpectator()
-    # dms.process()
-    # print(dms.push_update())
-    one_user_screen_log()
+    dms = DMSpectator()
+    dms.process()
+    t_start = time.time()
+    print(dms.push_update())
+    print(time.time() - t_start)
+    # one_user_screen_log()
+    # one_user_print_log()
+
     return 0
 
 
