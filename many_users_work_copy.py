@@ -1,7 +1,7 @@
 import datetime
 import time
 import os
-import random_marker as rm
+import random_marker_copy as rm
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
@@ -9,7 +9,6 @@ from enum import Enum
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
 CONNECTED_INT = 1  # Промежутки попыток подключения к БД
-TIME_FACT = 1  # Промежутки между фактами маркирования на пользователе (в оригинале 10)
 '''
 Нужно ли вообще учитывать, что происходит на пользователе?
 
@@ -38,9 +37,11 @@ TIME_FACT = 1  # Промежутки между фактами маркиров
 по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
 '''
 
-ROWS_NUM = 5  # Количество генерируемых строк от одного пользователя
+ROWS_NUM = 6  # Количество генерируемых строк от одного пользователя в минуту
 USERS_NUM = 2 # Количество пользователей
 BATCH_SIZE = 5  # Количество строк отправляемых за одну загрузку (в оригинале 100)
+PUSH_INT = 1  # Время между отправкой update от пользователя в базу (в минутах)
+MARK_INT = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 
 
 #Operation = Enum('Operation', ['SCREEN', 'PRINT'])
@@ -64,8 +65,10 @@ class ScreenmarkFact(ico.Model):
 # Класс отправки псевдологов
 class SpectatorTesting:
 
-    CONNECTIONS = {} # Словарь id: ico.Database
+    CONNECTIONS = {}  # Словарь id: ico.Database
     USERS = {}  # Словарь id: rm.RandUser 
+    ROWS = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
+    LAST_PUSH_TIME = {} # Словарь id: время последней отправки с пользователя
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -73,6 +76,18 @@ class SpectatorTesting:
             user = rm.RandUser()
             self.USERS[user.user_id()] = user
             self.CONNECTIONS[user.user_id()] = None
+            self.LAST_PUSH_TIME[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
+            self.ROWS[user.user_id()] = ScreenmarkFact(
+                dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
+                dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
+                report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
+                user_name=user.user_name, \
+                user_domain=user.user_domain, \
+                marker=user.marker, \
+                department=user.department, \
+                root_disk_serial=user.disk, \
+                ipv4_address=user.ip, \
+                hw_address=user.hw)
 
     # Подключение к базе
     def connect(self, id):
@@ -87,6 +102,7 @@ class SpectatorTesting:
                 db_url=DB_URL,
                 username=uname_,
                 password=pass_)
+            self.CONNECTIONS[id] = self.db
             print(f'{id}: Подключился базе')
             return True
         except Exception as ex_:
@@ -104,17 +120,41 @@ class SpectatorTesting:
     def connect_users(self):
         for id in self.USERS.keys():
             self.process(id=id)            
-    
-    # Отправка псевдологов
-    # @profile
-    def push_update(self):
-        rows = gen_users()
-        print("Отправка логов")
-        self.db.insert(rows, BATCH_SIZE)
+
+    # Запускает цикл по CONNECTIONS для отправки логов
+    def pushing_updates(self):
+        while True:
+            for id in self.CONNECTIONS.keys():
+                report_time = datetime.datetime.today()
+                if report_time - self.LAST_PUSH_TIME[id] < datetime.timedelta(minutes=PUSH_INT):
+                    continue
+                else:
+                    rows = []
+                    mark_time = report_time
+                    for i in range(ROWS_NUM):
+                        self.USERS[id].user_info()
+                        row = self.ROWS[id]
+                        row.dt = mark_time
+                        row.dtm = mark_time
+                        row.report_time = report_time
+                        mark_time -= datetime.timedelta(seconds=MARK_INT)
+                        rows.append(row)
+                    print("Push")
+                    self.CONNECTIONS[id].insert(rows, BATCH_SIZE)
+                    self.LAST_PUSH_TIME[id] = report_time
+
+    # # Отправка псевдологов
+    # # @profile
+    # def push_update(self):
+    #     rows = gen_users()
+    #     print("Отправка логов")
+    #     self.db.insert(rows, BATCH_SIZE)
 
     def entr_point(self):
-        self.gen_users()
-        self.connect_users()
+        self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
+        self.connect_users()  # Пользователи подключаются к базе
+        self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
+
 
 
 def main():
