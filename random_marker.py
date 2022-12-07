@@ -44,6 +44,23 @@ class RandUser:
 
 if __name__ == "__main__":
     example = RandUser()
+=======
+    
+    def user_info(self):
+        padding = 13
+        print('USER INFORMATION:')
+        print('department:'.ljust(padding), self.department)
+        print('ip:'.ljust(padding), self.ip)
+        print('hw:'.ljust(padding), self.hw)
+        print('disk:'.ljust(padding), self.disk)
+        print('user_domain:'.ljust(padding), self.user_domain)
+        print('marker:'.ljust(padding), self.marker)
+
+    
+
+if __name__ == "__main__":
+    example = rand_user()
+>>>>>>> 6f2b61b4985744679296c01bb46dd5478c789d16
     example.user_info()
 
 
