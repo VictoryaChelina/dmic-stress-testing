@@ -11,11 +11,7 @@ def parser():
 
 
 # Класс предназначен для генерации раномного пользователя 
-<<<<<<< HEAD
 class RandUser:
-=======
-class rand_user:
->>>>>>> 6f2b61b4985744679296c01bb46dd5478c789d16
     seed(10)
 
     def __init__(self):
@@ -27,7 +23,6 @@ class rand_user:
         self.user_name = ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
         self.user_domain = ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
         self.marker = generate_marker(self.department, self.disk, self.user_name, self.user_domain)
-<<<<<<< HEAD
     
 
     # Возвращает уникальный id пользователя
@@ -49,23 +44,6 @@ class rand_user:
 
 if __name__ == "__main__":
     example = RandUser()
-=======
-    
-    def user_info(self):
-        padding = 13
-        print('USER INFORMATION:')
-        print('department:'.ljust(padding), self.department)
-        print('ip:'.ljust(padding), self.ip)
-        print('hw:'.ljust(padding), self.hw)
-        print('disk:'.ljust(padding), self.disk)
-        print('user_domain:'.ljust(padding), self.user_domain)
-        print('marker:'.ljust(padding), self.marker)
-
-    
-
-if __name__ == "__main__":
-    example = rand_user()
->>>>>>> 6f2b61b4985744679296c01bb46dd5478c789d16
     example.user_info()
 
 
