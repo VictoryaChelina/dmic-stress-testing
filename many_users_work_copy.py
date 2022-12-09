@@ -1,14 +1,15 @@
 import datetime
 import time
+from time import perf_counter
 import os
 import random_marker_copy as rm
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
+import traceback
+import logging
 
 
-DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
-CONNECTED_INT = 1  # Промежутки попыток подключения к БД
 '''
 Нужно ли вообще учитывать, что происходит на пользователе?
 
@@ -37,13 +38,18 @@ CONNECTED_INT = 1  # Промежутки попыток подключения 
 по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
 '''
 
-ROWS_NUM = 6  # Количество генерируемых строк от одного пользователя в минуту
+
+DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
+CONNECTED_INT = 1  # Промежутки попыток подключения к БД (в секундах)
+ROWS_NUM = 1  # Количество генерируемых строк от одного пользователя в минуту
 USERS_NUM = 2 # Количество пользователей
-BATCH_SIZE = 5  # Количество строк отправляемых за одну загрузку (в оригинале 100)
+BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INT = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
+LOG_LEVEL = 15
 
 
+logging.basicConfig(level=logging.INFO)
 #Operation = Enum('Operation', ['SCREEN', 'PRINT'])
 
 
@@ -79,7 +85,7 @@ class ScreenmarkFact(ico.Model):
 # Класс отправки псевдологов
 class SpectatorTesting:
 
-    CONNECTIONS = {}  # Словарь id: ico.Database
+    CONNECTIONS = {}  # Словарь id: ico.Database (экземпляры подключения)
     USERS = {}  # Словарь id: rm.RandUser 
     ROWS = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
     LAST_PUSH_TIME = {}  # Словарь id: время последней отправки с пользователя
@@ -109,7 +115,7 @@ class SpectatorTesting:
     def connect(self, id):
         try:
             user = self.USERS[id]
-            department_number = user.department
+            department_number = int(user.department)
             uname_ = f'department{department_number:05}'
             pass_ = f'pass{department_number:05}'
 
@@ -119,10 +125,11 @@ class SpectatorTesting:
                 username=uname_,
                 password=pass_)
             self.CONNECTIONS[id] = self.db
-            print(f'{id}: Подключился базе')
+            logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
         except Exception as ex_:
-            print(f'{id}: Происходит подключение')
+            logging.info(f'{id} {uname_} {pass_}: Подключение...')
+            #traceback.print_exc()
         return False
 
     def process(self, id):
@@ -150,23 +157,18 @@ class SpectatorTesting:
                     delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
                     row = self.ROWS[id]  # Подготовленная строка по данному пользователю
                     for i in range(ROWS_NUM, 0, -1):
-                        print(i)
                         mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
                         row.dt = mark_time  # В подготовленную строку добавляются отметки времени
                         row.dtm = mark_time
                         row.report_time = report_time
-                        row.row_info()  # Для отладки
                         rows.append(row)
                     self.USER_ROWS_COUNT[id] += ROWS_NUM
+                    start = perf_counter()
                     self.CONNECTIONS[id].insert(rows, BATCH_SIZE)
+                    stop = perf_counter()
+                    logging.debug(f'Insert time:{stop-start}')
                     self.LAST_PUSH_TIME[id] = report_time
-
-    # # Отправка псевдологов
-    # # @profile
-    # def push_update(self):
-    #     rows = gen_users()
-    #     print("Отправка логов")
-    #     self.db.insert(rows, BATCH_SIZE)
+            break
 
     def entr_point(self):
         self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
