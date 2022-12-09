@@ -1,5 +1,5 @@
 from marker_generator.marker_generator import generate_marker
-from random import randint, seed
+from random import randint, seed, choices
 import argparse
 
 
@@ -12,16 +12,16 @@ def parser():
 
 # Класс предназначен для генерации раномного пользователя 
 class RandUser:
-    seed(10)
+    seed(11)
 
     def __init__(self):
         ch = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.department = str(randint(1, 65536))
         self.ip = f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
-        self.hw = ''.join([ch[randint(0, 35)] for _ in range(12)])
-        self.disk = ''.join([ch[randint(0, 35)] for _ in range(20)])
-        self.user_name = ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
-        self.user_domain = ''.join([ch[randint(0, 25)] for _ in range(randint(1, 100))])
+        self.hw = ''.join(choices(ch,k=12))
+        self.disk = ''.join(choices(ch,k=20))
+        self.user_name = ''.join(choices(ch,k=randint(1, 100)))
+        self.user_domain = ''.join(choices(ch,k=randint(1, 100)))
         self.marker = generate_marker(self.department, self.disk, self.user_name, self.user_domain)
     
 
