@@ -41,15 +41,15 @@ import logging
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
 CONNECTED_INT = 1  # Промежутки попыток подключения к БД (в секундах)
-ROWS_NUM = 1  # Количество генерируемых строк от одного пользователя в минуту
+ROWS_NUM = 2  # Количество генерируемых строк от одного пользователя в минуту
 USERS_NUM = 2 # Количество пользователей
 BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INT = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
-LOG_LEVEL = 15
+LOG_LEVEL = 10
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 #Operation = Enum('Operation', ['SCREEN', 'PRINT'])
 
 
@@ -91,6 +91,9 @@ class SpectatorTesting:
     LAST_PUSH_TIME = {}  # Словарь id: время последней отправки с пользователя
     USER_ROWS_COUNT = {}  # Словарь id: всего строк отправлено от пользователя
 
+    #start_time = None
+    #stop_time = None
+
     # Генерируется заданное число пользователей
     def gen_users(self):
         for user in range(USERS_NUM):
@@ -99,6 +102,7 @@ class SpectatorTesting:
             self.CONNECTIONS[user.user_id()] = None
             self.LAST_PUSH_TIME[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
             self.USER_ROWS_COUNT[user.user_id()] = 0
+            # user.user_info()
             self.ROWS[user.user_id()] = ScreenmarkFact(
                 dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
                 dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
@@ -142,26 +146,42 @@ class SpectatorTesting:
     # Пользователи подключаются к базе
     def connect_users(self):
         for id in self.USERS.keys():
-            self.process(id=id)            
+            self.process(id=id)
 
+    # Генерация строк
+    def gen_rows(self, id, report_time):
+        rows = []
+        mark_time = report_time  # Время записи в лог на клиенте факта маркирования
+        delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
+        row = self.ROWS[id]  # Подготовленная строка по данному пользователю
+        for i in range(ROWS_NUM, 0, -1):
+            mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
+            row.dt = mark_time  # В подготовленную строку добавляются отметки времени
+            row.dtm = mark_time
+            row.report_time = report_time
+            rows.append(row)
+        return rows
+        
     # Запускает цикл по CONNECTIONS для отправки логов
     def pushing_updates(self):
+        start_time = datetime.datetime.today()  # Время начала загрузки (необходимо для проверки)
         while True:
             for id in self.CONNECTIONS.keys():
                 report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
                 if report_time - self.LAST_PUSH_TIME[id] < datetime.timedelta(seconds=PUSH_INT):
                     continue
                 else:
-                    rows = []
-                    mark_time = report_time  # Время записи в лог на клиенте факта маркирования
-                    delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
-                    row = self.ROWS[id]  # Подготовленная строка по данному пользователю
-                    for i in range(ROWS_NUM, 0, -1):
-                        mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
-                        row.dt = mark_time  # В подготовленную строку добавляются отметки времени
-                        row.dtm = mark_time
-                        row.report_time = report_time
-                        rows.append(row)
+                    rows = self.gen_rows(id = id, report_time=report_time)
+                    # rows = []
+                    # mark_time = report_time  # Время записи в лог на клиенте факта маркирования
+                    # delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
+                    # row = self.ROWS[id]  # Подготовленная строка по данному пользователю
+                    # for i in range(ROWS_NUM, 0, -1):
+                    #     mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
+                    #     row.dt = mark_time  # В подготовленную строку добавляются отметки времени
+                    #     row.dtm = mark_time
+                    #     row.report_time = report_time
+                    #     rows.append(row)
                     self.USER_ROWS_COUNT[id] += ROWS_NUM
                     start = perf_counter()
                     self.CONNECTIONS[id].insert(rows, BATCH_SIZE)
@@ -169,106 +189,43 @@ class SpectatorTesting:
                     logging.debug(f'Insert time:{stop-start}')
                     self.LAST_PUSH_TIME[id] = report_time
             break
+        stop_time = datetime.datetime.today()  # Время конца загрузки (необходимо для проверки)
+
+    # Проверка, что строки действительно попали в базу
+    ''' Подсчет, что за промежуток времени отправки от 
+    каждого пользователя ушло строк столько,
+     сколько соответсвует в словаре USER_EOWS_COUNT
+    '''
+    def check(self):
+        connection = self.CONNECTIONS[0]
+        statment = "SELECT * FROM dmic.user \
+            WHERE "
+        for user in connection.select(statment, model_class=ScreenmarkFact):
+            print(user.marker)
+        
+        #for person in db.select("SELECT * FROM my_test_db.person", model_class=Person):
+            #print(person.first_name, person.last_name)
 
     def entr_point(self):
+        start_gen = perf_counter()
         self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
+        end_gen = perf_counter()
+        logging.warning(f'Generated users {len(self.USERS)} in {end_gen-start_gen} seconds')
         self.connect_users()  # Пользователи подключаются к базе
+        end_connect = perf_counter()
+        logging.warning(f'Connected users {len(self.USERS)} in {end_connect-end_gen} seconds')
         self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
+        end_push = perf_counter()
+        logging.warning(f'pushed rows in {end_push-end_connect} seconds')
+
 
 
 
 def main():
     test = SpectatorTesting()
     test.entr_point()
-    # dms = SpectatorTesting()
-    # dms.process()
-    # t_start = time.time()
-    # print(dms.push_update())
-    # print(time.time() - t_start)
-    # one_user_screen_log()
-    # one_user_print_log()
     return 0
 
 
 if __name__ == '__main__':
     main()
-
-
-# # Генератор пользователей (пока пользователи генерируются поочереди)
-# def gen_users():
-#     users = []
-#     for i in range(USERS_NUM):
-#         user = gen_rows_one_user()
-#         users += user
-#     return users
-
-
-# # Генератор рандомных строк для таблиц screenmarkfact (один пользователь)
-# # report_time нужно изменить далее
-# # @profile
-# def gen_rows_one_user():
-#     rows_one_user = []
-#     user_name = rm.rand_user()
-#     user_domain = rm.rand_domain()
-#     department = rm.rand_department()
-#     root_disk_serial = rm.rand_disk()
-#     marker = rm.rand_marker(department, root_disk_serial, user_name, user_domain)
-#     ipv4_address = rm.rand_ip()
-#     hw_address = rm.rand_hw()[:17]
-#     for i in range(ROWS_NUM):
-#         row = ScreenmarkFact(
-#             dt = datetime.date.today(),\
-#             dtm = datetime.datetime.today(),\
-#             report_time = datetime.datetime.today(),\
-#             user_name=user_name,\
-#             user_domain=user_domain,\
-#             department=department,\
-#             root_disk_serial=root_disk_serial,\
-#             marker=marker,\
-#             ipv4_address=ipv4_address,\
-#             hw_address=hw_address)
-#             #operation_type = Operation.SCREEN if random() < 0.95 else Operation.PRINT)
-#         rows_one_user.append(row)
-#         # time.sleep(TIME_FACT)
-#     return rows_one_user
-
-
-
-# def make_path():
-#     path = os.getcwd()
-#     path = os.mkdir(path + f'\\log\\{str(rm.rand_folder())}\\')
-#     return str(path)
-
-
-# # Генератор файла screenmark_log
-# def one_user_screen_log():
-#     path = make_path()
-#     with open(path + "screenmark_log", "w") as log:
-#         rows = gen_rows_one_user()
-#         for row in rows:
-#             log.write(
-#                 f'{str(row.dtm)[:19]},{str(row.dtm)[20:23]} - event_api.py: INFO - screen-marking;' +
-#                 f'{row.user_name};' + 
-#                 f'{row.user_domain};' +
-#                 f'{row.marker};' +
-#                 f'{row.department};' +
-#                 f'{row.root_disk_serial};' + 
-#                 f'{row.ipv4_address};' +
-#                 f'{row.hw_address}' + '\n')
-
-
-# # Генератор файла printmark_log
-# def one_user_print_log():
-#     path = make_path()
-#     with open(path + "screenmark_log", "w") as log:
-#         rows = gen_rows_one_user()
-#         for row in rows:
-#             log.write(
-#                 f'{str(row.dtm)[:19]},{str(row.dtm)[20:23]} - event_api.py: INFO - print-marking;' + #  надо уточнить (посмотреть в printmark_log)
-#                 f'{row.user_name};' + 
-#                 f'{row.user_domain};' +
-#                 f'{row.marker};' +
-#                 f'{row.department};' +
-#                 f'{row.root_disk_serial};' + 
-#                 f'{row.ipv4_address};' +
-#                 f'{row.hw_address}' + '\n')
