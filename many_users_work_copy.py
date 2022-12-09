@@ -40,7 +40,7 @@ CONNECTED_INT = 1  # Промежутки попыток подключения 
 ROWS_NUM = 6  # Количество генерируемых строк от одного пользователя в минуту
 USERS_NUM = 2 # Количество пользователей
 BATCH_SIZE = 5  # Количество строк отправляемых за одну загрузку (в оригинале 100)
-PUSH_INT = 1  # Время между отправкой update от пользователя в базу (в минутах)
+PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INT = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 
 
@@ -61,6 +61,20 @@ class ScreenmarkFact(ico.Model):
     hw_address = ico.FixedStringField(length=17)
     #operation_type = ico.Enum8Field(Operation)
 
+    def row_info(self):
+        padding = 17
+        print('USER INFORMATION:')
+        print('dt:'.ljust(padding), self.dt)
+        print('dtm:'.ljust(padding), self.dtm)
+        print('report_time:'.ljust(padding), self.report_time)
+        print('user_name:'.ljust(padding), self.user_name)
+        print('user_domain:'.ljust(padding), self.user_domain)
+        print('marker:'.ljust(padding), self.marker)
+        print('department:'.ljust(padding), self.department)
+        print('root_disk_serial:'.ljust(padding), self.root_disk_serial)
+        print('ipv4_address:'.ljust(padding), self.ipv4_address)
+        print('hw_address:'.ljust(padding), self.hw_address)
+        
 
 # Класс отправки псевдологов
 class SpectatorTesting:
@@ -68,7 +82,8 @@ class SpectatorTesting:
     CONNECTIONS = {}  # Словарь id: ico.Database
     USERS = {}  # Словарь id: rm.RandUser 
     ROWS = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
-    LAST_PUSH_TIME = {} # Словарь id: время последней отправки с пользователя
+    LAST_PUSH_TIME = {}  # Словарь id: время последней отправки с пользователя
+    USER_ROWS_COUNT = {}  # Словарь id: всего строк отправлено от пользователя
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -77,6 +92,7 @@ class SpectatorTesting:
             self.USERS[user.user_id()] = user
             self.CONNECTIONS[user.user_id()] = None
             self.LAST_PUSH_TIME[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
+            self.USER_ROWS_COUNT[user.user_id()] = 0
             self.ROWS[user.user_id()] = ScreenmarkFact(
                 dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
                 dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
@@ -125,21 +141,23 @@ class SpectatorTesting:
     def pushing_updates(self):
         while True:
             for id in self.CONNECTIONS.keys():
-                report_time = datetime.datetime.today()
-                if report_time - self.LAST_PUSH_TIME[id] < datetime.timedelta(minutes=PUSH_INT):
+                report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
+                if report_time - self.LAST_PUSH_TIME[id] < datetime.timedelta(seconds=PUSH_INT):
                     continue
                 else:
                     rows = []
-                    mark_time = report_time
-                    for i in range(ROWS_NUM):
-                        self.USERS[id].user_info()
-                        row = self.ROWS[id]
-                        row.dt = mark_time
+                    mark_time = report_time  # Время записи в лог на клиенте факта маркирования
+                    delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
+                    row = self.ROWS[id]  # Подготовленная строка по данному пользователю
+                    for i in range(ROWS_NUM, 0, -1):
+                        print(i)
+                        mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
+                        row.dt = mark_time  # В подготовленную строку добавляются отметки времени
                         row.dtm = mark_time
                         row.report_time = report_time
-                        mark_time -= datetime.timedelta(seconds=MARK_INT)
+                        row.row_info()  # Для отладки
                         rows.append(row)
-                    print("Push")
+                    self.USER_ROWS_COUNT[id] += ROWS_NUM
                     self.CONNECTIONS[id].insert(rows, BATCH_SIZE)
                     self.LAST_PUSH_TIME[id] = report_time
 
