@@ -10,6 +10,15 @@ import logging
 import threading
 import concurrent.futures
 import numpy as np
+import argparse
+import json 
+
+
+def parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config')
+    args = parser.parse_args()
+    return args.config
 
 
 '''
@@ -38,20 +47,7 @@ import numpy as np
 Получается 6 млн строк в минуту от всех.
 А в реальности даже лучше, т.к. нет каких-то общих часов,
 по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
-'''
-
-
-DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
-CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
-ROWS_NUM = 100  # Количество генерируемых строк от одного пользователя в минуту
-USERS_NUM = 1000 # Количество пользователей
-BATCH_SIZE = 1000  # Количество строк отправляемых за одну загрузку (в оригинале 100)
-PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
-MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
-MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
-
-LOG_LEVEL = 10
-
+''' 
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -229,7 +225,7 @@ class SpectatorTesting:
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
 
         print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion, '\n')
-        print('Всего времени потрачно:'.ljust(padding), self.total_user_push, '\n')
+        print('Всего времени потрачено:'.ljust(padding), self.total_user_push, '\n')
 
     def entr_point(self):
         start_gen = perf_counter()
@@ -251,5 +247,21 @@ def main():
     return 0
 
 
+def cofig_reading(file):
+    f = open(file)
+    config = json.load(f)
+    return config
+    
+
 if __name__ == '__main__':
+    config_parser = parser()
+    config = cofig_reading(config_parser) 
+    DB_URL = config['DB_URL']  # Адресс Dmic
+    CONNECTION_INTERVAL = config['CONNECTION_INTERVAL']  # Промежутки попыток подключения к БД (в секундах)
+    ROWS_NUM = config['ROWS_NUM']  # Количество генерируемых строк от одного пользователя в минуту
+    USERS_NUM = config['USERS_NUM'] # Количество пользователей
+    BATCH_SIZE = config['BATCH_SIZE']  # Количество строк отправляемых за одну загрузку (в оригинале 100)
+    PUSH_INT = config['PUSH_INT']  # Время между отправкой update от пользователя в базу (в секундах)
+    MARK_INTERVAL = config['MARK_INTERVAL']  # Промежутки между фактами маркирования на пользователе (в секнудах)
+    MAX_CONNECTION_ATTEMPTS = config['MAX_CONNECTION_ATTEMPTS']  #максимальное число попыток подключения к базе для пользователя
     main()
