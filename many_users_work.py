@@ -2,7 +2,7 @@ import datetime
 import time
 from time import perf_counter
 import os
-import random_marker_copy as rm
+import random_marker as rm
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
@@ -40,17 +40,18 @@ import logging
 
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
-CONNECTED_INT = 1  # Промежутки попыток подключения к БД (в секундах)
+CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
 ROWS_NUM = 2  # Количество генерируемых строк от одного пользователя в минуту
 USERS_NUM = 2 # Количество пользователей
 BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INT = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
+MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
+
 LOG_LEVEL = 10
 
 
-logging.basicConfig(level=logging.INFO)
-#Operation = Enum('Operation', ['SCREEN', 'PRINT'])
+logging.basicConfig(level=logging.DEBUG)
 
 
 # Модель таблиц
@@ -85,22 +86,23 @@ class ScreenmarkFact(ico.Model):
 # Класс отправки псевдологов
 class SpectatorTesting:
 
-    CONNECTIONS = {}  # Словарь id: ico.Database (экземпляры подключения)
-    USERS = {}  # Словарь id: rm.RandUser 
-    ROWS = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
-    LAST_PUSH_TIME = {}  # Словарь id: время последней отправки с пользователя
-    USER_ROWS_COUNT = {}  # Словарь id: всего строк отправлено от пользователя
+    connections = {}  # Словарь id: ico.Database (экземпляры подключения)
+    not_connected_users = []  # Список пользователей, которые не смогли подключиться к базе за максимальное число попыток
+    users = {}  # Словарь id: rm.RandUser 
+    rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
+    last_push_time = {}  # Словарь id: время последней отправки с пользователя
+    user_rows_count = {}  # Словарь id: всего строк отправлено от пользователя
 
     # Генерируется заданное число пользователей
     def gen_users(self):
         for user in range(USERS_NUM):
             user = rm.RandUser()
-            self.USERS[user.user_id()] = user
-            self.CONNECTIONS[user.user_id()] = None
-            self.LAST_PUSH_TIME[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
-            self.USER_ROWS_COUNT[user.user_id()] = 0
+            self.users[user.user_id()] = user
+            self.connections[user.user_id()] = None
+            self.last_push_time[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
+            self.user_rows_count[user.user_id()] = 0
             # user.user_info()
-            self.ROWS[user.user_id()] = ScreenmarkFact(
+            self.rows_const_part[user.user_id()] = ScreenmarkFact(
                 dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
                 dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
                 report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
@@ -115,7 +117,7 @@ class SpectatorTesting:
     # Подключение к базе
     def connect(self, id):
         try:
-            user = self.USERS[id]
+            user = self.users[id]
             department_number = int(user.department)
             uname_ = f'department{department_number:05}'
             pass_ = f'pass{department_number:05}'
@@ -125,7 +127,7 @@ class SpectatorTesting:
                 db_url=DB_URL,
                 username=uname_,
                 password=pass_)
-            self.CONNECTIONS[id] = self.db
+            self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
         except Exception as ex_:
@@ -135,14 +137,16 @@ class SpectatorTesting:
 
     def process(self, id):
         self.connected = False
-        while not self.connected:
+        attempts_counter = 0
+        while not self.connected and attempts_counter <= MAX_CONNECTION_ATTEMPTS:
+            attempts_counter += 1
             self.connected = self.connect(id=id)
             if not self.connected:
-                time.sleep(CONNECTED_INT)
+                time.sleep(CONNECTION_INTERVAL)
 
     # Пользователи подключаются к базе
     def connect_users(self):
-        for id in self.USERS.keys():
+        for id in self.users.keys():
             self.process(id=id)
 
     # Генерация строк
@@ -150,7 +154,7 @@ class SpectatorTesting:
         rows = []
         mark_time = report_time  # Время записи в лог на клиенте факта маркирования
         delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
-        row = self.ROWS[id]  # Подготовленная строка по данному пользователю
+        row = self.rows_const_part[id]  # Подготовленная строка по данному пользователю
         for i in range(ROWS_NUM, 0, -1):
             mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
             row.dt = mark_time  # В подготовленную строку добавляются отметки времени
@@ -162,36 +166,31 @@ class SpectatorTesting:
     # Запускает цикл по CONNECTIONS для отправки логов
     def pushing_updates(self):
         while True:
-            for id in self.CONNECTIONS.keys():
+            for id in self.connections.keys():
                 report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
-                if report_time - self.LAST_PUSH_TIME[id] < datetime.timedelta(seconds=PUSH_INT):
+                if report_time - self.last_push_time[id] < datetime.timedelta(seconds=PUSH_INT):
                     continue
                 else:
                     rows = self.gen_rows(id = id, report_time=report_time)
-                    self.USER_ROWS_COUNT[id] += ROWS_NUM
+                    self.user_rows_count[id] += ROWS_NUM
                     start = perf_counter()
-                    self.CONNECTIONS[id].insert(rows, BATCH_SIZE)
+                    self.connections[id].insert(rows, BATCH_SIZE)
                     stop = perf_counter()
                     logging.debug(f'Insert time:{stop-start}')
-                    self.LAST_PUSH_TIME[id] = report_time
+                    self.last_push_time[id] = report_time
             break
 
     def entr_point(self):
         start_gen = perf_counter()
         self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
         end_gen = perf_counter()
-        logging.warning(f'Generated users {len(self.USERS)} in {end_gen-start_gen} seconds')
+        logging.warning(f'Generated users {len(self.users)} in {end_gen-start_gen} seconds')
         self.connect_users()  # Пользователи подключаются к базе
         end_connect = perf_counter()
-        logging.warning(f'Connected users {len(self.USERS)} in {end_connect-end_gen} seconds')
+        logging.warning(f'Connected users {len(self.users)} in {end_connect-end_gen} seconds')
         self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
         end_push = perf_counter()
         logging.warning(f'pushed rows in {end_push-end_connect} seconds')
-
-
-def one_conection():
-    test = SpectatorTesting()
-    test.process()
 
 
 def main():
