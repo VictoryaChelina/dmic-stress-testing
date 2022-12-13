@@ -43,9 +43,9 @@ import numpy as np
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
 CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
-ROWS_NUM = 10  # Количество генерируемых строк от одного пользователя в минуту
+ROWS_NUM = 100  # Количество генерируемых строк от одного пользователя в минуту
 USERS_NUM = 1000 # Количество пользователей
-BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
+BATCH_SIZE = 1000  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
@@ -100,6 +100,7 @@ class SpectatorTesting:
     user_connection_time = []  # учитывает время подключения одного пользователя (если в итоге подключился)
     row_insertion_time = []  # учитывает время вставки строк в базу
     total_user_connection = 0
+    total_user_push = 0
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -158,16 +159,13 @@ class SpectatorTesting:
         else:
             self.user_connection_time.append(stop-start)
 
-
     # Пользователи подключаются к базе
     def connect_users(self):
         start = perf_counter()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             executor.map(self.process, self.users.keys())
         stop = perf_counter()
         self.total_user_connection = stop - start
-        # for id in self.users.keys():
-        #     self.process(id=id)
 
     # Генерация строк
     def gen_rows(self, id, report_time):
@@ -185,23 +183,27 @@ class SpectatorTesting:
             self.row_generation_time.append(stop-start)
             rows.append(row)
         return rows
-        
+
+    def push_update_one_user(self, id):
+        report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
+        if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=PUSH_INT):
+            rows = self.gen_rows(id = id, report_time=report_time)
+            self.user_rows_count[id] += ROWS_NUM
+            start = perf_counter()
+            self.connections[id].insert(rows, BATCH_SIZE)
+            stop = perf_counter()
+            self.row_insertion_time.append((stop - start)/len(rows))
+            self.last_push_time[id] = report_time
+
     # Запускает цикл по connections для отправки логов
     def pushing_updates(self):
+        start = perf_counter()
         while True:
-            for id in self.connections.keys():
-                report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
-                if report_time - self.last_push_time[id] < datetime.timedelta(seconds=PUSH_INT):
-                    continue
-                else:
-                    rows = self.gen_rows(id = id, report_time=report_time)
-                    self.user_rows_count[id] += ROWS_NUM
-                    start = perf_counter()
-                    self.connections[id].insert(rows, BATCH_SIZE)
-                    stop = perf_counter()
-                    self.row_insertion_time.append((stop - start) / len(rows))
-                    self.last_push_time[id] = report_time
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                executor.map(self.push_update_one_user, self.users.keys())
             break
+        stop = perf_counter()
+        self.total_user_push = stop - start
     
     def metrics(self):
         row_generation = np.array(self.row_generation_time)
@@ -227,6 +229,7 @@ class SpectatorTesting:
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
 
         print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion, '\n')
+        print('Всего времени потрачно:'.ljust(padding), self.total_user_push, '\n')
 
     def entr_point(self):
         start_gen = perf_counter()
