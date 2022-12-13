@@ -8,6 +8,7 @@ from random import randint, random
 from enum import Enum
 import traceback
 import logging
+import numpy as np
 
 
 '''
@@ -45,13 +46,13 @@ ROWS_NUM = 2  # Количество генерируемых строк от о
 USERS_NUM = 2 # Количество пользователей
 BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
-MARK_INT = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
+MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
 
 LOG_LEVEL = 10
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 # Модель таблиц
@@ -92,6 +93,11 @@ class SpectatorTesting:
     rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
     last_push_time = {}  # Словарь id: время последней отправки с пользователя
     user_rows_count = {}  # Словарь id: всего строк отправлено от пользователя
+
+    # Сбор метрик
+    row_generation_time = []  # учитывается время добавления к заготовленной строке временных значений 
+    user_connection_time = []  # учитывает время подключения одного пользователя (если в итоге подключился)
+    row_insertion_time = []  # учитывает время вставки строк в базу
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -138,11 +144,18 @@ class SpectatorTesting:
     def process(self, id):
         self.connected = False
         attempts_counter = 0
+        start = perf_counter()
         while not self.connected and attempts_counter <= MAX_CONNECTION_ATTEMPTS:
             attempts_counter += 1
             self.connected = self.connect(id=id)
             if not self.connected:
                 time.sleep(CONNECTION_INTERVAL)
+        stop = perf_counter()
+        if self.connected == False:
+            self.not_connected_users.append(id)
+        else:
+            self.user_connection_time.append(stop-start)
+
 
     # Пользователи подключаются к базе
     def connect_users(self):
@@ -153,17 +166,20 @@ class SpectatorTesting:
     def gen_rows(self, id, report_time):
         rows = []
         mark_time = report_time  # Время записи в лог на клиенте факта маркирования
-        delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
+        delta = datetime.timedelta(seconds=MARK_INTERVAL)  # Интервал между фактами маркирования 
         row = self.rows_const_part[id]  # Подготовленная строка по данному пользователю
         for i in range(ROWS_NUM, 0, -1):
+            start = perf_counter()
             mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
             row.dt = mark_time  # В подготовленную строку добавляются отметки времени
             row.dtm = mark_time
             row.report_time = report_time
+            stop = perf_counter()
+            self.row_generation_time.append(stop-start)
             rows.append(row)
         return rows
         
-    # Запускает цикл по CONNECTIONS для отправки логов
+    # Запускает цикл по connections для отправки логов
     def pushing_updates(self):
         while True:
             for id in self.connections.keys():
@@ -176,9 +192,35 @@ class SpectatorTesting:
                     start = perf_counter()
                     self.connections[id].insert(rows, BATCH_SIZE)
                     stop = perf_counter()
-                    logging.debug(f'Insert time:{stop-start}')
+                    self.row_insertion_time.append((stop - start) / len(rows))
                     self.last_push_time[id] = report_time
             break
+    
+    def metrics(self):
+        row_generation = np.array(self.row_generation_time)
+        average_row_generation = np.average(row_generation)
+        rows_num = row_generation.size
+        total_row_generation = np.sum(row_generation)
+
+        user_connection = np.array(self.user_connection_time)
+        average_user_connection = np.average(user_connection)
+        connections_num = user_connection.size
+        total_user_connection = np.sum(user_connection)
+
+        row_insertion = np.array(self.row_insertion_time)
+        average_row_insertion = np.average(row_insertion)
+
+        padding = 40
+        print('МЕТРИКИ:\n')
+        print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
+        print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
+        print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
+
+        print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
+        print('Всего подключений:'.ljust(padding), connections_num)
+        print('Всего времени потрачено:'.ljust(padding), total_user_connection, '\n')
+
+        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
 
     def entr_point(self):
         start_gen = perf_counter()
@@ -191,6 +233,7 @@ class SpectatorTesting:
         self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
         end_push = perf_counter()
         logging.warning(f'pushed rows in {end_push-end_connect} seconds')
+        self.metrics()
 
 
 def main():
