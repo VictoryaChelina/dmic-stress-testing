@@ -12,11 +12,11 @@ def parser():
 
 # Класс предназначен для генерации раномного пользователя 
 class RandUser:
-    seed(11)
+    seed(10)
 
     def __init__(self):
         ch = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        self.department = str(randint(1, 65536))
+        self.department = str(randint(1, 65535))
         self.ip = f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
         self.hw = ''.join(choices(ch,k=12))
         self.disk = ''.join(choices(ch,k=20))

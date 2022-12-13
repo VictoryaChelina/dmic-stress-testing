@@ -49,7 +49,7 @@ MARK_INT = 10  # Промежутки между фактами маркиров
 LOG_LEVEL = 10
 
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 #Operation = Enum('Operation', ['SCREEN', 'PRINT'])
 
 
@@ -90,9 +90,6 @@ class SpectatorTesting:
     ROWS = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
     LAST_PUSH_TIME = {}  # Словарь id: время последней отправки с пользователя
     USER_ROWS_COUNT = {}  # Словарь id: всего строк отправлено от пользователя
-
-    #start_time = None
-    #stop_time = None
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -164,7 +161,6 @@ class SpectatorTesting:
         
     # Запускает цикл по CONNECTIONS для отправки логов
     def pushing_updates(self):
-        start_time = datetime.datetime.today()  # Время начала загрузки (необходимо для проверки)
         while True:
             for id in self.CONNECTIONS.keys():
                 report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
@@ -172,16 +168,6 @@ class SpectatorTesting:
                     continue
                 else:
                     rows = self.gen_rows(id = id, report_time=report_time)
-                    # rows = []
-                    # mark_time = report_time  # Время записи в лог на клиенте факта маркирования
-                    # delta = datetime.timedelta(seconds=MARK_INT)  # Интервал между фактами маркирования 
-                    # row = self.ROWS[id]  # Подготовленная строка по данному пользователю
-                    # for i in range(ROWS_NUM, 0, -1):
-                    #     mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
-                    #     row.dt = mark_time  # В подготовленную строку добавляются отметки времени
-                    #     row.dtm = mark_time
-                    #     row.report_time = report_time
-                    #     rows.append(row)
                     self.USER_ROWS_COUNT[id] += ROWS_NUM
                     start = perf_counter()
                     self.CONNECTIONS[id].insert(rows, BATCH_SIZE)
@@ -189,22 +175,6 @@ class SpectatorTesting:
                     logging.debug(f'Insert time:{stop-start}')
                     self.LAST_PUSH_TIME[id] = report_time
             break
-        stop_time = datetime.datetime.today()  # Время конца загрузки (необходимо для проверки)
-
-    # Проверка, что строки действительно попали в базу
-    ''' Подсчет, что за промежуток времени отправки от 
-    каждого пользователя ушло строк столько,
-     сколько соответсвует в словаре USER_EOWS_COUNT
-    '''
-    def check(self):
-        connection = self.CONNECTIONS[0]
-        statment = "SELECT * FROM dmic.user \
-            WHERE "
-        for user in connection.select(statment, model_class=ScreenmarkFact):
-            print(user.marker)
-        
-        #for person in db.select("SELECT * FROM my_test_db.person", model_class=Person):
-            #print(person.first_name, person.last_name)
 
     def entr_point(self):
         start_gen = perf_counter()
@@ -219,6 +189,9 @@ class SpectatorTesting:
         logging.warning(f'pushed rows in {end_push-end_connect} seconds')
 
 
+def one_conection():
+    test = SpectatorTesting()
+    test.process()
 
 
 def main():
