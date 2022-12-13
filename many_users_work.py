@@ -1,13 +1,14 @@
 import datetime
 import time
 from time import perf_counter
-import os
 import random_marker as rm
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
 import traceback
 import logging
+import threading
+import concurrent.futures
 import numpy as np
 
 
@@ -42,8 +43,8 @@ import numpy as np
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
 CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
-ROWS_NUM = 2  # Количество генерируемых строк от одного пользователя в минуту
-USERS_NUM = 2 # Количество пользователей
+ROWS_NUM = 10  # Количество генерируемых строк от одного пользователя в минуту
+USERS_NUM = 1000 # Количество пользователей
 BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
@@ -52,7 +53,7 @@ MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыто�
 LOG_LEVEL = 10
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 
 # Модель таблиц
@@ -98,6 +99,7 @@ class SpectatorTesting:
     row_generation_time = []  # учитывается время добавления к заготовленной строке временных значений 
     user_connection_time = []  # учитывает время подключения одного пользователя (если в итоге подключился)
     row_insertion_time = []  # учитывает время вставки строк в базу
+    total_user_connection = 0
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -159,8 +161,13 @@ class SpectatorTesting:
 
     # Пользователи подключаются к базе
     def connect_users(self):
-        for id in self.users.keys():
-            self.process(id=id)
+        start = perf_counter()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            executor.map(self.process, self.users.keys())
+        stop = perf_counter()
+        self.total_user_connection = stop - start
+        # for id in self.users.keys():
+        #     self.process(id=id)
 
     # Генерация строк
     def gen_rows(self, id, report_time):
@@ -205,7 +212,6 @@ class SpectatorTesting:
         user_connection = np.array(self.user_connection_time)
         average_user_connection = np.average(user_connection)
         connections_num = user_connection.size
-        total_user_connection = np.sum(user_connection)
 
         row_insertion = np.array(self.row_insertion_time)
         average_row_insertion = np.average(row_insertion)
@@ -218,9 +224,9 @@ class SpectatorTesting:
 
         print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
         print('Всего подключений:'.ljust(padding), connections_num)
-        print('Всего времени потрачено:'.ljust(padding), total_user_connection, '\n')
+        print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
 
-        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
+        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion, '\n')
 
     def entr_point(self):
         start_gen = perf_counter()
