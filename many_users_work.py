@@ -60,6 +60,7 @@ MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыто�
 
 THREAD = True
 POOL = True
+DEPARTMENT = True  # Включает опцию одного большого департамента
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -110,16 +111,18 @@ class SpectatorTesting:
     total_user_connection = 0
     total_user_push = 0
 
+
     # Генерируется заданное число пользователей
     def gen_users(self):
         for user in range(USERS_NUM):
             user = rm.RandUser()
-            self.users[user.user_id()] = user
-            self.connections[user.user_id()] = None
-            self.last_push_time[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
-            self.user_rows_count[user.user_id()] = 0
+            id = user.user_id()
+            self.users[id] = user
+            self.connections[id] = None
+            self.last_push_time[id] = datetime.datetime.today() - datetime.timedelta(minutes=1)
+            self.user_rows_count[id] = 0
             # user.user_info()
-            self.rows_const_part[user.user_id()] = ScreenmarkFact(
+            self.rows_const_part[id] = ScreenmarkFact(
                 dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
                 dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
                 report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
@@ -135,7 +138,10 @@ class SpectatorTesting:
     def connect(self, id):
         try:
             user = self.users[id]
-            department_number = int(user.department)
+            if DEPARTMENT: 
+                department_number = 1
+            else:
+                department_number = int(user.department)
             uname_ = f'department{department_number:05}'
             pass_ = f'pass{department_number:05}'
 
@@ -240,10 +246,12 @@ class SpectatorTesting:
         print('МЕТРИКИ:\n')
         print('Threading for push updates:'.ljust(padding), THREAD)
         print('ThreadPool for connect users:'.ljust(padding), POOL)
+        print('All users in one department:'.ljust(padding), DEPARTMENT)
         print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
         print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
         print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
 
+        print(average_user_connection)
         print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
         print('Всего подключений:'.ljust(padding), connections_num)
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')

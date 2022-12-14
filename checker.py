@@ -1,4 +1,4 @@
-from  many_users_work_copy import DB_URL, ScreenmarkFact
+from  many_users_work import DB_URL, ScreenmarkFact
 import logging
 import infi.clickhouse_orm as ico
 import time
@@ -32,15 +32,20 @@ def process():
     
 
 def reading(connection):
-    for row in ScreenmarkFact.objects_in(connection).filter(ScreenmarkFact.department == '4271').only('marker'):
+    for row in ScreenmarkFact.objects_in(connection).filter(ScreenmarkFact.department == '4271').only('department'):
         print(row.marker)
 
+
+def counting(connection):
+    rows = connection.count(ScreenmarkFact)
+    return rows
 
 
 def check():
     connection = process()
-    reading(connection)
-
+    #reading(connection)
+    rows = counting(connection)
+    print(rows)
 
 
 if __name__ == '__main__':
