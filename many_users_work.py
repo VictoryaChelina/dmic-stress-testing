@@ -58,6 +58,8 @@ PUSH_INT = 60  # Время между отправкой update от польз
 MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
 
+THREAD = True
+POOL = True
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -168,8 +170,12 @@ class SpectatorTesting:
     # Пользователи подключаются к базе
     def connect_users(self):
         start = perf_counter()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(self.process, self.users.keys())
+        if POOL:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(self.process, self.users.keys())
+        else:
+            for id in self.users.keys():
+                self.process(id=id)
         stop = perf_counter()
         self.total_user_connection = stop - start
 
@@ -201,8 +207,10 @@ class SpectatorTesting:
         if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=PUSH_INT):
             rows = self.gen_rows(id = id, report_time=report_time)
             self.user_rows_count[id] += ROWS_NUM
-            threading.Thread(target=self.insertion, args=(id, rows)).start()
-            #self.insertion(id=id, rows=rows)
+            if THREAD:
+                threading.Thread(target=self.insertion, args=(id, rows)).start()
+            else:
+                self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
 
     # Запускает цикл по connections для отправки логов
@@ -230,6 +238,8 @@ class SpectatorTesting:
 
         padding = 40
         print('МЕТРИКИ:\n')
+        print('Threading for push updates:'.ljust(padding), THREAD)
+        print('ThreadPool for connect users:'.ljust(padding), POOL)
         print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
         print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
         print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
@@ -238,7 +248,8 @@ class SpectatorTesting:
         print('Всего подключений:'.ljust(padding), connections_num)
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
 
-        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion, '\n')
+        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
+        print('Всего времени = среднее * кол-во строк'.ljust(padding), average_row_insertion * rows_num)
         print('Всего времени потрачено:'.ljust(padding), self.total_user_push, '\n')
 
     def entr_point(self):
