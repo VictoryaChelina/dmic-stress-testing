@@ -10,6 +10,15 @@ import logging
 import threading
 import concurrent.futures
 import numpy as np
+import argparse
+import json 
+
+
+def parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config')
+    args = parser.parse_args()
+    return args.config
 
 
 '''
@@ -38,8 +47,7 @@ import numpy as np
 Получается 6 млн строк в минуту от всех.
 А в реальности даже лучше, т.к. нет каких-то общих часов,
 по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
-'''
-
+''' 
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
 CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
@@ -50,8 +58,8 @@ PUSH_INT = 60  # Время между отправкой update от польз
 MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
 
-LOG_LEVEL = 10
-
+THREAD = True
+POOL = True
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -100,6 +108,7 @@ class SpectatorTesting:
     user_connection_time = []  # учитывает время подключения одного пользователя (если в итоге подключился)
     row_insertion_time = []  # учитывает время вставки строк в базу
     total_user_connection = 0
+    total_user_push = 0
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -158,16 +167,17 @@ class SpectatorTesting:
         else:
             self.user_connection_time.append(stop-start)
 
-
     # Пользователи подключаются к базе
     def connect_users(self):
         start = perf_counter()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            executor.map(self.process, self.users.keys())
+        if POOL:
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(self.process, self.users.keys())
+        else:
+            for id in self.users.keys():
+                self.process(id=id)
         stop = perf_counter()
         self.total_user_connection = stop - start
-        # for id in self.users.keys():
-        #     self.process(id=id)
 
     # Генерация строк
     def gen_rows(self, id, report_time):
@@ -185,23 +195,33 @@ class SpectatorTesting:
             self.row_generation_time.append(stop-start)
             rows.append(row)
         return rows
-        
+
+    def insertion(self, id, rows):
+        start = perf_counter()
+        self.connections[id].insert(rows, BATCH_SIZE)
+        stop = perf_counter()
+        self.row_insertion_time.append((stop - start)/len(rows))
+
+    def push_update_one_user(self, id):
+        report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
+        if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=PUSH_INT):
+            rows = self.gen_rows(id = id, report_time=report_time)
+            self.user_rows_count[id] += ROWS_NUM
+            if THREAD:
+                threading.Thread(target=self.insertion, args=(id, rows)).start()
+            else:
+                self.insertion(id=id, rows=rows)
+            self.last_push_time[id] = report_time
+
     # Запускает цикл по connections для отправки логов
     def pushing_updates(self):
+        start = perf_counter()
         while True:
-            for id in self.connections.keys():
-                report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
-                if report_time - self.last_push_time[id] < datetime.timedelta(seconds=PUSH_INT):
-                    continue
-                else:
-                    rows = self.gen_rows(id = id, report_time=report_time)
-                    self.user_rows_count[id] += ROWS_NUM
-                    start = perf_counter()
-                    self.connections[id].insert(rows, BATCH_SIZE)
-                    stop = perf_counter()
-                    self.row_insertion_time.append((stop - start) / len(rows))
-                    self.last_push_time[id] = report_time
+            for id in self.users.keys():
+                self.push_update_one_user(id=id)
             break
+        stop = perf_counter()
+        self.total_user_push = stop - start
     
     def metrics(self):
         row_generation = np.array(self.row_generation_time)
@@ -218,6 +238,8 @@ class SpectatorTesting:
 
         padding = 40
         print('МЕТРИКИ:\n')
+        print('Threading for push updates:'.ljust(padding), THREAD)
+        print('ThreadPool for connect users:'.ljust(padding), POOL)
         print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
         print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
         print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
@@ -226,7 +248,9 @@ class SpectatorTesting:
         print('Всего подключений:'.ljust(padding), connections_num)
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
 
-        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion, '\n')
+        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
+        print('Всего времени = среднее * кол-во строк'.ljust(padding), average_row_insertion * rows_num)
+        print('Всего времени потрачено:'.ljust(padding), self.total_user_push, '\n')
 
     def entr_point(self):
         start_gen = perf_counter()
@@ -243,8 +267,11 @@ class SpectatorTesting:
 
 
 def main():
+    start_test = perf_counter()
     test = SpectatorTesting()
     test.entr_point()
+    stop_test = perf_counter()
+    logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
