@@ -190,24 +190,27 @@ class SpectatorTesting:
             rows.append(row)
         return rows
 
+    def insertion(self, id, rows):
+        start = perf_counter()
+        self.connections[id].insert(rows, BATCH_SIZE)
+        stop = perf_counter()
+        self.row_insertion_time.append((stop - start)/len(rows))
+
     def push_update_one_user(self, id):
         report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
         if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=PUSH_INT):
             rows = self.gen_rows(id = id, report_time=report_time)
             self.user_rows_count[id] += ROWS_NUM
-            start = perf_counter()
-            threading.Thread(target=self.connections[id].insert, args=(rows, BATCH_SIZE).start())
-            #self.connections[id].insert(rows, BATCH_SIZE)
-            stop = perf_counter()
-            self.row_insertion_time.append((stop - start)/len(rows))
+            threading.Thread(target=self.insertion, args=(id, rows)).start()
+            #self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
 
     # Запускает цикл по connections для отправки логов
     def pushing_updates(self):
         start = perf_counter()
         while True:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                executor.map(self.push_update_one_user, self.users.keys())
+            for id in self.users.keys():
+                self.push_update_one_user(id=id)
             break
         stop = perf_counter()
         self.total_user_push = stop - start
