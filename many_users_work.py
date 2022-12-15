@@ -16,9 +16,58 @@ import json
 
 def parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('config')
+    parser.add_argument(
+        '--config',
+        type=str, 
+        default='.\config.json',
+        help='give config for sress-test')
+    parser.add_argument(
+        '--db',
+        type=str, 
+        help='add DB_URL'
+    )
+    parser.add_argument(
+        '--conn-int',
+        type=int, 
+        help='add connection interval'
+    )
+    parser.add_argument(
+        '--rows',
+        type=int, 
+        help='add rows number per one user'
+    )
+    parser.add_argument(
+        '--users',
+        type=int, 
+        help='add users number per one department'
+    )
+    parser.add_argument(
+        '--depart',
+        type=int, 
+        help='add departments number'
+    )
+    parser.add_argument(
+        '--batch',
+        type=int, 
+        help='add batch size'
+    )
+    parser.add_argument(
+        '--p-int',
+        type=int, 
+        help='add push interval (in seconds)'
+    )
+    parser.add_argument(
+        '--m-int',
+        type=int, 
+        help='add mark interval for screenmark'
+    )
+    parser.add_argument(
+        '--m-con-at',
+        type=int, 
+        help='add max connection attempts for 1 user'
+    )
     args = parser.parse_args()
-    return args.config
+    return args
 
 
 '''
@@ -287,7 +336,16 @@ class SpectatorTesting:
         self.metrics()
 
 
+def read_config():
+    config = parser()
+    with open(config.config) as file:
+        configuration = json.load(file)
+    return configuration
+
+
 def main():
+    configuration = read_config()
+    print(configuration)
     start_test = perf_counter()
     test = SpectatorTesting()
     test.entr_point()
