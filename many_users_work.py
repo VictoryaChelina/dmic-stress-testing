@@ -98,25 +98,25 @@ def parser():
 по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
 ''' 
 
-DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
-CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
-ROWS_NUM = 1  # Количество генерируемых строк от одного пользователя в минуту
+# DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
+# CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
+# #ROWS_NUM = 1  # Количество генерируемых строк от одного пользователя в минуту
 
-''' 
-Если USERS_NUM == 1, в каждом департаменте по одному пользователю, следовательно,
-у каждого пользователя будет оригинальные логины и пароли для подключения к базе.
-Всего пользователей в таком случае будет DEPARTMENT_NUM * 1 = DEPARTMENT_NUM
+# ''' 
+# Если USERS_NUM == 1, в каждом департаменте по одному пользователю, следовательно,
+# у каждого пользователя будет оригинальные логины и пароли для подключения к базе.
+# Всего пользователей в таком случае будет DEPARTMENT_NUM * 1 = DEPARTMENT_NUM
 
-Если USERS_NUM > 1, пользователи одного департамента будет подключаться по одному логину и паролю.
-Следовательно, всего пользователей будет DEPARTMENT_NUM * USERS_NUM
-'''
-USERS_NUM = 2 # Количество пользователей в одном департаменте
-DEPARTMENT_NUM = 3  # Число департаментов
+# Если USERS_NUM > 1, пользователи одного департамента будет подключаться по одному логину и паролю.
+# Следовательно, всего пользователей будет DEPARTMENT_NUM * USERS_NUM
+# '''
+# USERS_NUM = 2 # Количество пользователей в одном департаменте
+# DEPARTMENT_NUM = 3  # Число департаментов
 
-BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
-PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
-MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
-MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
+# BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
+# PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
+# MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
+# MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
 
 THREAD = True
 POOL = True
@@ -155,7 +155,8 @@ class ScreenmarkFact(ico.Model):
 
 # Класс отправки псевдологов
 class SpectatorTesting:
-
+    def __init__(self, configuration):
+        self.configuration = configuration
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     not_connected_users = []  # Список пользователей, которые не смогли подключиться к базе за максимальное число попыток
     users = {}  # Словарь id: rm.RandUser 
@@ -173,9 +174,9 @@ class SpectatorTesting:
 
     # Генерируется заданное число пользователей
     def gen_users(self):
-        for department in range(DEPARTMENT_NUM):
+        for department in range(self.configuration['DEPARTMENT_NUM']):
             department = randint(1, 65535)
-            for user in range(USERS_NUM):
+            for user in range(self.configuration['USERS_NUM']):
                 user = rm.RandUser(department=department)
                 id = user.user_id()
                 self.users[id] = user
@@ -205,7 +206,7 @@ class SpectatorTesting:
 
             self.db = ico.Database(
                 'dmic',
-                db_url=DB_URL,
+                db_url=self.configuration['DB_URL'],
                 username=uname_,
                 password=pass_)
             self.connections[id] = self.db
@@ -220,11 +221,11 @@ class SpectatorTesting:
         self.connected = False
         attempts_counter = 0
         start = perf_counter()
-        while not self.connected and attempts_counter <= MAX_CONNECTION_ATTEMPTS:
+        while not self.connected and attempts_counter <= self.configuration['MAX_CONNECTION_ATTEMPTS']:
             attempts_counter += 1
             self.connected = self.connect(id=id)
             if not self.connected:
-                time.sleep(CONNECTION_INTERVAL)
+                time.sleep(self.configuration['CONNECTION_INTERVAL'])
         stop = perf_counter()
         if self.connected == False:
             self.not_connected_users.append(id)
@@ -247,9 +248,9 @@ class SpectatorTesting:
     def gen_rows(self, id, report_time):
         rows = []
         mark_time = report_time  # Время записи в лог на клиенте факта маркирования
-        delta = datetime.timedelta(seconds=MARK_INTERVAL)  # Интервал между фактами маркирования 
+        delta = datetime.timedelta(seconds=self.configuration[MARK_INTERVAL])  # Интервал между фактами маркирования 
         row = self.rows_const_part[id]  # Подготовленная строка по данному пользователю
-        for i in range(ROWS_NUM, 0, -1):
+        for i in range(self.configuration['ROWS_NUM'], 0, -1):
             start = perf_counter()
             mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
             row.dt = mark_time  # В подготовленную строку добавляются отметки времени
@@ -262,15 +263,15 @@ class SpectatorTesting:
 
     def insertion(self, id, rows):
         start = perf_counter()
-        self.connections[id].insert(rows, BATCH_SIZE)
+        self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
         stop = perf_counter()
         self.row_insertion_time.append((stop - start)/len(rows))
 
     def push_update_one_user(self, id):
         report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
-        if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=PUSH_INT):
+        if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=self.onfiguration['PUSH_INT']):
             rows = self.gen_rows(id = id, report_time=report_time)
-            self.user_rows_count[id] += ROWS_NUM
+            self.user_rows_count[id] += self.configuration['ROWS_NUM']
             if THREAD:
                 threading.Thread(target=self.insertion, args=(id, rows)).start()
             else:
@@ -305,9 +306,9 @@ class SpectatorTesting:
         print('Threading for push updates:'.ljust(padding), THREAD)
         print('ThreadPool for connect users:'.ljust(padding), POOL, '\n')
 
-        print('Number of departments:'.ljust(padding), DEPARTMENT_NUM)
-        print('Number of users per department:'.ljust(padding), USERS_NUM)
-        print('Total number of users:'.ljust(padding), USERS_NUM * DEPARTMENT_NUM, '\n')
+        print('Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
+        print('Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
+        print('Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'], '\n')
 
         print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
         print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
@@ -340,14 +341,31 @@ def read_config():
     config = parser()
     with open(config.config) as file:
         configuration = json.load(file)
+    if config.db != None:
+        configuration["DB_URL"] = config.db
+    if config.conn_int != None:
+        configuration["CONNECTION_INTERVAL"] = config.conn_int
+    if config.rows != None:
+        configuration["ROWS_NUM"] = config.rows
+    if config.users != None:
+        configuration["USERS_NUM"] = config.users
+    if config.depart != None:
+        configuration["DEPARTMENT_NUM"] = config.depart
+    if config.batch != None:
+        configuration["BATCH_SIZE"] = config.batch
+    if config.p_int != None:
+        configuration["PUSH_INT"] = config.p_int
+    if config.m_int != None:
+        configuration["MARK_INTERVAL"] = config.m_int
+    if config.m_con_at != None:
+        configuration["MAX_CONNECTION_ATTEMPTS"] = config.m_con_at
     return configuration
 
 
 def main():
     configuration = read_config()
-    print(configuration)
     start_test = perf_counter()
-    test = SpectatorTesting()
+    test = SpectatorTesting(configuration=configuration)
     test.entr_point()
     stop_test = perf_counter()
     logging.warning(f'test worked in {stop_test-start_test} seconds')
