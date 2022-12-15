@@ -51,8 +51,19 @@ def parser():
 
 DB_URL = 'http://10.11.20.98:8123'  # Адресс Dmic
 CONNECTION_INTERVAL = 1  # Промежутки попыток подключения к БД (в секундах)
-ROWS_NUM = 10  # Количество генерируемых строк от одного пользователя в минуту
-USERS_NUM = 1000 # Количество пользователей
+ROWS_NUM = 1  # Количество генерируемых строк от одного пользователя в минуту
+
+''' 
+Если USERS_NUM == 1, в каждом департаменте по одному пользователю, следовательно,
+у каждого пользователя будет оригинальные логины и пароли для подключения к базе.
+Всего пользователей в таком случае будет DEPARTMENT_NUM * 1 = DEPARTMENT_NUM
+
+Если USERS_NUM > 1, пользователи одного департамента будет подключаться по одному логину и паролю.
+Следовательно, всего пользователей будет DEPARTMENT_NUM * USERS_NUM
+'''
+USERS_NUM = 2 # Количество пользователей в одном департаменте
+DEPARTMENT_NUM = 3  # Число департаментов
+
 BATCH_SIZE = 100  # Количество строк отправляемых за одну загрузку (в оригинале 100)
 PUSH_INT = 60  # Время между отправкой update от пользователя в базу (в секундах)
 MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
@@ -110,26 +121,30 @@ class SpectatorTesting:
     total_user_connection = 0
     total_user_push = 0
 
+
     # Генерируется заданное число пользователей
     def gen_users(self):
-        for user in range(USERS_NUM):
-            user = rm.RandUser()
-            self.users[user.user_id()] = user
-            self.connections[user.user_id()] = None
-            self.last_push_time[user.user_id()] = datetime.datetime.today() - datetime.timedelta(minutes=1)
-            self.user_rows_count[user.user_id()] = 0
-            # user.user_info()
-            self.rows_const_part[user.user_id()] = ScreenmarkFact(
-                dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
-                dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
-                report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
-                user_name=user.user_name, \
-                user_domain=user.user_domain, \
-                marker=user.marker, \
-                department=user.department, \
-                root_disk_serial=user.disk, \
-                ipv4_address=user.ip, \
-                hw_address=user.hw)
+        for department in range(DEPARTMENT_NUM):
+            department = randint(1, 65535)
+            for user in range(USERS_NUM):
+                user = rm.RandUser(department=department)
+                id = user.user_id()
+                self.users[id] = user
+                self.connections[id] = None
+                self.last_push_time[id] = datetime.datetime.today() - datetime.timedelta(minutes=1)
+                self.user_rows_count[id] = 0
+                # user.user_info()
+                self.rows_const_part[id] = ScreenmarkFact(
+                    dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
+                    dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
+                    report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1), \
+                    user_name=user.user_name, \
+                    user_domain=user.user_domain, \
+                    marker=user.marker, \
+                    department=user.department, \
+                    root_disk_serial=user.disk, \
+                    ipv4_address=user.ip, \
+                    hw_address=user.hw)
 
     # Подключение к базе
     def connect(self, id):
@@ -239,11 +254,17 @@ class SpectatorTesting:
         padding = 40
         print('МЕТРИКИ:\n')
         print('Threading for push updates:'.ljust(padding), THREAD)
-        print('ThreadPool for connect users:'.ljust(padding), POOL)
+        print('ThreadPool for connect users:'.ljust(padding), POOL, '\n')
+
+        print('Number of departments:'.ljust(padding), DEPARTMENT_NUM)
+        print('Number of users per department:'.ljust(padding), USERS_NUM)
+        print('Total number of users:'.ljust(padding), USERS_NUM * DEPARTMENT_NUM, '\n')
+
         print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
         print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
         print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
 
+        print(average_user_connection)
         print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
         print('Всего подключений:'.ljust(padding), connections_num)
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
