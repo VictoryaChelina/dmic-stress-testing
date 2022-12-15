@@ -12,12 +12,9 @@ setup(
     description="Stress tessting of DMIC server",
 
     install_requires=[
-        'infi.clickhouse_orm',
-        'threading',
-        'concurrent.futures',
-        'import numpy as np'
+        'infi.clickhouse-orm',
+        'numpy'
     ],
-
     entry_points={
          'console_scripts': [
             'make-stress = dmic-stress-testing.many_users_work:main'
