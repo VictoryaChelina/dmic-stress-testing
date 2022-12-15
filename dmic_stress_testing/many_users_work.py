@@ -1,7 +1,7 @@
 import datetime
 import time
 from time import perf_counter
-import random_marker as rm
+import dmic_stress_testing.random_marker as rm
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
@@ -12,7 +12,6 @@ import concurrent.futures
 import numpy as np
 import argparse
 import json 
-
 
 def parser():
     parser = argparse.ArgumentParser()

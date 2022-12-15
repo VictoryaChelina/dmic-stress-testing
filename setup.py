@@ -6,7 +6,7 @@ from setuptools import setup
 setup(
     name="dmic-stress-testing",
     version="0",
-    packages=["dmic-stress-testing"],
+    packages=["dmic_stress_testing"],
     include_package_data=True,
     author="Ivannikov Institute for System Programming of the RAS",
     description="Stress tessting of DMIC server",
@@ -17,7 +17,7 @@ setup(
     ],
     entry_points={
          'console_scripts': [
-            'make-stress = dmic-stress-testing.many_users_work:main'
+            'make-stress = dmic_stress_testing.many_users_work:main'
         ]
     }
 )
