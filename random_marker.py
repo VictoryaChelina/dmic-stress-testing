@@ -14,9 +14,9 @@ def parser():
 class RandUser:
     seed(10)
 
-    def __init__(self):
+    def __init__(self, department):
         ch = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        self.department = str(randint(1, 65535))
+        self.department = str(department)
         self.ip = f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
         self.hw = ''.join(choices(ch,k=12))
         self.disk = ''.join(choices(ch,k=20))
