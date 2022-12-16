@@ -337,10 +337,23 @@ class SpectatorTesting:
         self.metrics()
 
 
+def result_config(config):
+    with open('config.json') as defualt_config:
+        default = json.load(defualt_config)
+    with open(config) as alter_config:
+        alter = json.load(alter_config)
+    if default == alter:
+        return alter
+    for key in default.keys():
+        if key not in alter.keys():
+            alter[key] = default[key]
+    return alter
+
+
+
 def read_config():
     config = parser()
-    with open(config.config) as file:
-        configuration = json.load(file)
+    configuration = result_config(config.config)
     if config.db != None:
         configuration["DB_URL"] = config.db
     if config.conn_int != None:
@@ -364,11 +377,12 @@ def read_config():
 
 def main():
     configuration = read_config()
-    start_test = perf_counter()
-    test = SpectatorTesting(configuration=configuration)
-    test.entr_point()
-    stop_test = perf_counter()
-    logging.warning(f'test worked in {stop_test-start_test} seconds')
+    print(configuration)
+    # start_test = perf_counter()
+    # test = SpectatorTesting(configuration=configuration)
+    # test.entr_point()
+    # stop_test = perf_counter()
+    # logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
