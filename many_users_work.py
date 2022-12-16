@@ -19,7 +19,7 @@ def parser():
     parser.add_argument(
         '--config',
         type=str, 
-        default='.\config.json',
+        default='config.json',
         help='give config for sress-test')
     parser.add_argument(
         '--db',
@@ -118,10 +118,10 @@ def parser():
 # MARK_INTERVAL = 10  # Промежутки между фактами маркирования на пользователе (в секнудах)
 # MAX_CONNECTION_ATTEMPTS = 10  #максимальное число попыток подключения к базе для пользователя 
 
-THREAD = True
-POOL = True
+THREAD = False
+POOL = False
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 
 
 # Модель таблиц
@@ -248,7 +248,7 @@ class SpectatorTesting:
     def gen_rows(self, id, report_time):
         rows = []
         mark_time = report_time  # Время записи в лог на клиенте факта маркирования
-        delta = datetime.timedelta(seconds=self.configuration[MARK_INTERVAL])  # Интервал между фактами маркирования 
+        delta = datetime.timedelta(seconds=self.configuration['MARK_INTERVAL'])  # Интервал между фактами маркирования 
         row = self.rows_const_part[id]  # Подготовленная строка по данному пользователю
         for i in range(self.configuration['ROWS_NUM'], 0, -1):
             start = perf_counter()
@@ -269,7 +269,7 @@ class SpectatorTesting:
 
     def push_update_one_user(self, id):
         report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
-        if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=self.onfiguration['PUSH_INT']):
+        if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
             rows = self.gen_rows(id = id, report_time=report_time)
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
             if THREAD:

@@ -1,4 +1,4 @@
-from  many_users_work import DB_URL, ScreenmarkFact
+from  many_users_work import ScreenmarkFact
 import logging
 import infi.clickhouse_orm as ico
 import time
@@ -11,7 +11,7 @@ def connect():
         pass_ = f'yuramarkin'
         connection = ico.Database(
             'dmic',
-            db_url=DB_URL,
+            db_url="http://10.11.20.98:8123",
             username=uname_,
             password=pass_)
         logging.info(f'{uname_} {pass_}: Подключился базе')
