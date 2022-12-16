@@ -1,11 +1,4 @@
 {
     "DB_URL" : "http://10.11.20.98:8123",
-    "CONNECTION_INTERVAL" : 1,
-    "ROWS_NUM" : 7,
-    "USERS_NUM" : 5,
-    "DEPARTMENT_NUM": 2,
-    "BATCH_SIZE" : 1,
-    "PUSH_INT" : 60,
-    "MARK_INTERVAL" : 10,
-    "MAX_CONNECTION_ATTEMPTS" : 10
+    "CONNECTION_INTERVAL" : 3
 }

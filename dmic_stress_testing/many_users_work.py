@@ -1,7 +1,7 @@
 import datetime
 import time
 from time import perf_counter
-import random_marker as rm
+import dmic_stress_testing.random_marker as rm
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
@@ -12,7 +12,6 @@ import concurrent.futures
 import numpy as np
 import argparse
 import json 
-
 
 def parser():
     parser = argparse.ArgumentParser()
@@ -337,10 +336,23 @@ class SpectatorTesting:
         self.metrics()
 
 
+def result_config(config):
+    with open('config.json') as defualt_config:
+        default = json.load(defualt_config)
+    with open(config) as alter_config:
+        alter = json.load(alter_config)
+    if default == alter:
+        return alter
+    for key in default.keys():
+        if key not in alter.keys():
+            alter[key] = default[key]
+    return alter
+
+
+
 def read_config():
     config = parser()
-    with open(config.config) as file:
-        configuration = json.load(file)
+    configuration = result_config(config.config)
     if config.db != None:
         configuration["DB_URL"] = config.db
     if config.conn_int != None:
@@ -364,6 +376,7 @@ def read_config():
 
 def main():
     configuration = read_config()
+    print(configuration)
     start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
