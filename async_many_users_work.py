@@ -139,50 +139,60 @@ class SpectatorTesting:
                     ipv4_address=user.ip,
                     hw_address=user.hw)
 
-    # Подключение к базе
-    async def connect(self, id):
-        try:
-            user = self.users[id]
-            department_number = int(user.department)
-            uname_ = f'department{department_number:05}'
-            pass_ = f'pass{department_number:05}'
-            async with ClientSession() as s:
-                client = ChClient(
-                    session=s,
-                    url=self.configuration['DB_URL'],
-                    database='dmic',
-                    user=uname_,
-                    password=pass_)
-            self.connections[id] = client
-            logging.info(f'{id} {uname_} {pass_}: Подключился базе')
-            return True
-        except Exception as ex_:
-            logging.info(f'{id} {uname_} {pass_}: Подключение...')
-            #traceback.print_exc()
-        return False
+    # # Подключение к базе
+    # async def connect(self, id):
+    #     try:
+    #         user = self.users[id]
+    #         department_number = int(user.department)
+    #         uname_ = f'department{department_number:05}'
+    #         pass_ = f'pass{department_number:05}'
+    #         async with ClientSession() as s:
+    #             client = ChClient(
+    #                 session=s,
+    #                 url=self.configuration['DB_URL'],
+    #                 database='dmic',
+    #                 user=uname_,
+    #                 password=pass_)
+    #         self.connections[id] = client
+    #         logging.info(f'{id} {uname_} {pass_}: Подключился базе')
+    #         return True
+    #     except Exception as ex_:
+    #         logging.info(f'{id} {uname_} {pass_}: Подключение...')
+    #         #traceback.print_exc()
+    #     return False
 
-    async def process(self, id):
-        self.connected = False
-        attempts_counter = 0
-        start = perf_counter()
-        while not self.connected and attempts_counter <= self.configuration['MAX_CONNECTION_ATTEMPTS']:
-            attempts_counter += 1
-            self.connected = self.connect(id=id)
-            if not self.connected:
-                time.sleep(self.configuration['CONNECTION_INTERVAL'])
-        stop = perf_counter()
-        if self.connected == False:
-            self.not_connected_users.append(id)
-        else:
-            self.user_connection_time.append(stop-start)
+    # async def process(self, id):
+    #     self.connected = False
+    #     attempts_counter = 0
+    #     start = perf_counter()
+    #     while not self.connected and attempts_counter <= self.configuration['MAX_CONNECTION_ATTEMPTS']:
+    #         attempts_counter += 1
+    #         self.connected = self.connect(id=id)
+    #         if not self.connected:
+    #             time.sleep(self.configuration['CONNECTION_INTERVAL'])
+    #     stop = perf_counter()
+    #     if self.connected == False:
+    #         self.not_connected_users.append(id)
+    #     else:
+    #         self.user_connection_time.append(stop-start)
 
-    # Пользователи подключаются к базе
-    async def connect_users(self):
-        start = perf_counter()
-        for id in self.connections.keys():
-            self.process(id)
-        stop = perf_counter()
-        self.total_user_connection = stop - start
+    # # Пользователи подключаются к базе
+    # async def connect_users(self):
+    #     start = perf_counter()
+    #     for id in self.connections.keys():
+    #         self.process(id)
+    #     stop = perf_counter()
+    #     self.total_user_connection = stop - start
+
+    async def connect_users(self, id, client: ChClient):
+        
+        async with ClientSession() as s:
+            client = ChClient(
+                session=s,
+                url=self.configuration['DB_URL'],
+                database='dmic',
+                user=,
+                password='yuramarkin')
 
     # Генерация строк
     def gen_rows(self, id, report_time):
