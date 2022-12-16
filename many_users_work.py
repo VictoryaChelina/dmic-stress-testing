@@ -378,11 +378,11 @@ def read_config():
 def main():
     configuration = read_config()
     print(configuration)
-    # start_test = perf_counter()
-    # test = SpectatorTesting(configuration=configuration)
-    # test.entr_point()
-    # stop_test = perf_counter()
-    # logging.warning(f'test worked in {stop_test-start_test} seconds')
+    start_test = perf_counter()
+    test = SpectatorTesting(configuration=configuration)
+    test.entr_point()
+    stop_test = perf_counter()
+    logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
