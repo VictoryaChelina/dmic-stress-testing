@@ -1,0 +1,4 @@
+{
+    "DB_URL" : "http://10.11.20.98:8123",
+    "CONNECTION_INTERVAL" : 3
+}
