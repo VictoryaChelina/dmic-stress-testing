@@ -67,6 +67,11 @@ def parser():
         type=int, 
         help='add max connection attempts for 1 user'
     )
+    parser.add_argument(
+        '--async_limit',
+        type=int, 
+        help='add async tasks limit'
+    )
     args = parser.parse_args()
     return args
  
@@ -129,8 +134,7 @@ class SpectatorTesting:
                 self.connections[id] = None
                 self.last_push_time[id] = datetime.datetime.today() - datetime.timedelta(minutes=1)
                 self.user_rows_count[id] = 0
-                # user.user_info()
-                self.rows_const_part[id] = (
+                self.rows_const_part[id] = [
                     datetime.datetime.today(),
                     datetime.datetime.today(),
                     datetime.datetime.today(),
@@ -140,28 +144,61 @@ class SpectatorTesting:
                     user.department,
                     user.disk,
                     user.ip,
-                    user.hw)
+                    user.hw]
     
     # Вставка строки
-    async def insert_row(self, client, id):
-        row = self.rows_const_part[id]
-        await client.execute("INSERT INTO screenmarkfact (*) VALUES", row)
-
-    # Подключение клиента и запуск вставки строк 
-    async def connect_client(self, id):
+    async def insert_rows_one_user(self, id):
         async with ClientSession() as s:
-            user = self.users[id]
-            department_number = int(user.department)
-            uname_ = f'department{department_number:05}'
-            pass_ = f'pass{department_number:05}'
-            client = ChClient(
-                session=s,
-                url=self.configuration['DB_URL'],
-                database='dmic',
-                user=uname_,
-                password=pass_)
-            futures = [self.insert_row(client=client, id=id) for row in range(self.configuration['ROWS_NUM'])]
-            await asyncio.gather(*futures)
+            self.rows_const_part[id][2] = datetime.datetime.today()
+            client = self.connections[id]
+            rows = []
+            for i in range(self.configuration['ROWS_NUM']):
+                self.rows_const_part[id][0] = datetime.datetime.today()
+                self.rows_const_part[id][1] = datetime.datetime.today()
+                row = self.rows_const_part[id]
+                rows.append(row)
+            # print(rows)
+            row = rows[0]
+            await client.execute("INSERT INTO screenmarkfact (*) VALUES", row)
+            # await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
+            logging.info(f'client with id {id} insert rows')
+
+    async def insert_rows_many_users(self):
+        async with ClientSession() as s:
+            # futures = [
+            #     self.insert_rows_one_user(id=id) for id in self.connections 
+            #     if self.last_push_time[id] - datetime.datetime.today() >= 
+            #     datetime.timedelta(seconds=self.configuration['PUSH_INT'])
+            #     ]
+            while True:
+                for id in self.connections:
+                    if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["ASYNC_LIMIT"]:
+                        asyncio.create_task(self.insert_rows_one_user(id))
+                    await asyncio.sleep(0)
+                break
+            # await asyncio.gather(*futures)
+
+    async def timeless(self):
+        while True:
+            await self.insert_rows_many_users()
+            break
+        # time.sleep()
+
+    # Подключение клиента 
+    async def connect_client(self, id):
+        # async with ClientSession() as s:
+        s = ClientSession()
+        user = self.users[id]
+        department_number = int(user.department)
+        uname_ = f'department{department_number:05}'
+        pass_ = f'pass{department_number:05}'
+        client = ChClient(
+            session=s,
+            url=self.configuration['DB_URL'],
+            database='dmic',
+            user=uname_,
+            password=pass_)
+        self.connections[id] = client
         logging.info(f'client with id {id} connected')
     
     # Цикл по клиентам 
@@ -171,9 +208,19 @@ class SpectatorTesting:
             await asyncio.gather(*futures)
         logging.info(f'clients done')
 
-    def entr_point(self):
-        self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
-        asyncio.run(self.connect_clients())
+    async def close_connections(self):
+        for id in self.connections:
+            client = self.connections[id]
+            await client.close()
+
+    async def entr_point(self):
+        self.gen_users()
+        await self.connect_clients()
+        await self.timeless()
+        while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
+            await asyncio.sleep(0)
+        await self.close_connections()
+
 
 
 def read_config():
@@ -198,19 +245,20 @@ def read_config():
         configuration["MARK_INTERVAL"] = config.m_int
     if config.m_con_at != None:
         configuration["MAX_CONNECTION_ATTEMPTS"] = config.m_con_at
+    if config.async_limit != None:
+        configuration["ASYNC_LIMIT"] = config.async_limit
     return configuration
 
 
-def main():
+async def main():
     configuration = read_config()
-    print(configuration)
     start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
-    test.entr_point()
+    await test.entr_point()
     stop_test = perf_counter()
     logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

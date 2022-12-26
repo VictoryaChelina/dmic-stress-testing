@@ -120,7 +120,7 @@ def parser():
 THREAD = True
 POOL = True
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 # Модель таблиц
