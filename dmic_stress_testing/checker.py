@@ -2,6 +2,7 @@ from  dmic_stress_testing.many_users_work import ScreenmarkFact
 import logging
 import infi.clickhouse_orm as ico
 import time
+import datetime
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,7 +33,7 @@ def process():
     
 
 def reading(connection):
-    for row in ScreenmarkFact.objects_in(connection).filter(ScreenmarkFact.user_name == '_').only('user_name'):
+    for row in ScreenmarkFact.objects_in(connection).filter(ScreenmarkFact.dt == datetime.date.today() - datetime.timedelta(days=12)).only('user_name'):
         print(row.user_name)
 
 
@@ -43,7 +44,7 @@ def counting(connection):
 
 def check():
     connection = process()
-    reading(connection)
+    #reading(connection)
     rows = counting(connection)
     print(rows)
 

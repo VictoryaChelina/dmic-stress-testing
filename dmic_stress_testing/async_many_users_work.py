@@ -149,15 +149,25 @@ class SpectatorTesting:
     # Вставка строки
     async def insert_rows_one_user(self, id):
         async with ClientSession() as s:
-            self.rows_const_part[id][2] = datetime.datetime.today()
+            report_time = datetime.datetime.today()
+            mark_time = report_time
+            self.rows_const_part[id][2] = report_time
             client = self.connections[id]
+            delta = datetime.timedelta(seconds=self.configuration['MARK_INTERVAL'])
             rows = []
-            for i in range(self.configuration['ROWS_NUM']):
-                self.rows_const_part[id][0] = datetime.datetime.today()
-                self.rows_const_part[id][1] = datetime.datetime.today()
+            for i in range(self.configuration['ROWS_NUM'], 0, -1):
+                start = perf_counter()
+                mark_time = report_time - delta * i
+                self.rows_const_part[id][0] = mark_time
+                self.rows_const_part[id][1] = mark_time
                 row = self.rows_const_part[id]
+                stop = perf_counter()
+                self.row_generation_time.append(stop-start)
                 rows.append(row)
+            start = perf_counter()
             await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
+            stop = perf_counter()
+            self.row_insertion_time.append((stop-start)/len(rows))
             self.total_user_push += self.configuration['ROWS_NUM']
             logging.info(f'client with id {id} insert rows')
 
@@ -180,6 +190,7 @@ class SpectatorTesting:
 
     # Подключение клиента 
     async def connect_client(self, id):
+        start = perf_counter()
         s = ClientSession()
         user = self.users[id]
         department_number = int(user.department)
@@ -192,6 +203,8 @@ class SpectatorTesting:
             user=uname_,
             password=pass_)
         self.connections[id] = client
+        stop = perf_counter()
+        self.user_connection_time.append(stop - start)
         self.total_user_connection += 1
         logging.info(f'client with id {id} connected')
     
@@ -207,6 +220,38 @@ class SpectatorTesting:
             client = self.connections[id]
             await client.close()
 
+    def metrics(self):
+        row_generation = np.array(self.row_generation_time)
+        average_row_generation = np.average(row_generation)
+        rows_num = row_generation.size
+        total_row_generation = np.sum(row_generation)
+
+        user_connection = np.array(self.user_connection_time)
+        average_user_connection = np.average(user_connection)
+        connections_num = user_connection.size
+
+        row_insertion = np.array(self.row_insertion_time)
+        average_row_insertion = np.average(row_insertion)
+
+        padding = 40
+        print('МЕТРИКИ:\n')
+
+        print('Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
+        print('Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
+        print('Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'], '\n')
+
+        print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
+        print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
+        print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
+
+        print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
+        print('Всего подключений:'.ljust(padding), connections_num)
+        print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
+
+        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
+        print('Всего времени = среднее * кол-во строк'.ljust(padding), average_row_insertion * rows_num)
+        print('Всего времени потрачено:'.ljust(padding), self.total_user_push, '\n')
+
     async def entr_point(self):
         self.gen_users()
         await self.connect_clients()
@@ -214,6 +259,7 @@ class SpectatorTesting:
         while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
             await asyncio.sleep(0)
         await self.close_connections()
+        self.metrics()
 
 
 
