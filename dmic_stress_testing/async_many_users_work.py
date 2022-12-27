@@ -91,9 +91,9 @@ class Row():
         ipv4_address,
         hw_address):
 
-        dt = datetime.datetime.today()
-        dtm = datetime.datetime.today()
-        report_time = datetime.datetime.today()
+        dt = None
+        dtm = None
+        report_time = None
         user_name = user_name
         user_domain = user_domain
         marker = marker
@@ -157,26 +157,20 @@ class SpectatorTesting:
                 self.rows_const_part[id][1] = datetime.datetime.today()
                 row = self.rows_const_part[id]
                 rows.append(row)
-            # print(rows)
-            row = rows[0]
-            await client.execute("INSERT INTO screenmarkfact (*) VALUES", row)
-            # await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
+            await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
+            self.total_user_push += self.configuration['ROWS_NUM']
             logging.info(f'client with id {id} insert rows')
 
     async def insert_rows_many_users(self):
         async with ClientSession() as s:
-            # futures = [
-            #     self.insert_rows_one_user(id=id) for id in self.connections 
-            #     if self.last_push_time[id] - datetime.datetime.today() >= 
-            #     datetime.timedelta(seconds=self.configuration['PUSH_INT'])
-            #     ]
             while True:
                 for id in self.connections:
-                    if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["ASYNC_LIMIT"]:
+                    if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["ASYNC_LIMIT"] and \
+                    datetime.datetime.today() - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
                         asyncio.create_task(self.insert_rows_one_user(id))
+                        self.last_push_time[id] = datetime.datetime.today()
                     await asyncio.sleep(0)
                 break
-            # await asyncio.gather(*futures)
 
     async def timeless(self):
         while True:
@@ -186,7 +180,6 @@ class SpectatorTesting:
 
     # Подключение клиента 
     async def connect_client(self, id):
-        # async with ClientSession() as s:
         s = ClientSession()
         user = self.users[id]
         department_number = int(user.department)
@@ -199,6 +192,7 @@ class SpectatorTesting:
             user=uname_,
             password=pass_)
         self.connections[id] = client
+        self.total_user_connection += 1
         logging.info(f'client with id {id} connected')
     
     # Цикл по клиентам 
