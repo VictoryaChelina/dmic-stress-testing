@@ -1,10 +1,8 @@
 import datetime
-import time
 from time import perf_counter
 import dmic_stress_testing.random_marker as rm
-from random import randint, random
-from enum import Enum
-import traceback
+# from dmic_stress_testing.common import parser, read_config
+from random import randint
 import logging
 import numpy as np
 import argparse
@@ -76,7 +74,7 @@ def parser():
     return args
  
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 # Модель таблиц
@@ -121,8 +119,8 @@ class SpectatorTesting:
     row_insertion_time = []  # учитывает время вставки строк в базу
     total_user_connection = 0
     total_user_push = 0
-
-
+    last_push_pc = None
+    start_time = None
     # Генерируется заданное число пользователей
     def gen_users(self):
         for department in range(self.configuration['DEPARTMENT_NUM']):
@@ -167,25 +165,31 @@ class SpectatorTesting:
             start = perf_counter()
             await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
             stop = perf_counter()
+            self.last_push_pc = perf_counter()
             self.row_insertion_time.append((stop-start)/len(rows))
             self.total_user_push += self.configuration['ROWS_NUM']
             logging.info(f'client with id {id} insert rows')
 
     async def insert_rows_many_users(self):
         async with ClientSession() as s:
-            while True:
-                for id in self.connections:
-                    if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["ASYNC_LIMIT"] and \
-                    datetime.datetime.today() - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
-                        asyncio.create_task(self.insert_rows_one_user(id))
-                        self.last_push_time[id] = datetime.datetime.today()
-                    await asyncio.sleep(0)
-                break
+            # while True:
+            for id in self.connections:
+                if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["ASYNC_LIMIT"] and \
+                datetime.datetime.today() - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
+                    asyncio.create_task(self.insert_rows_one_user(id))
+                    self.last_push_time[id] = datetime.datetime.today()
+                await asyncio.sleep(0)
+                # break
 
     async def timeless(self):
+        start = perf_counter()
         while True:
+            running_start = perf_counter()
             await self.insert_rows_many_users()
-            break
+            stop = perf_counter()
+            rps = self.total_user_push/(self.last_push_pc - self.start_time)
+            print(f'rps: {rps}',end='\r')
+        #break
         # time.sleep()
 
     # Подключение клиента 
@@ -235,6 +239,7 @@ class SpectatorTesting:
 
         padding = 40
         print('МЕТРИКИ:\n')
+        print('ASYNC_LIMIT:'.ljust(padding), self.configuration['ASYNC_LIMIT'])
 
         print('Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print('Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
@@ -294,6 +299,8 @@ async def main():
     configuration = read_config()
     start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
+    test.start_time = perf_counter()
+    test.last_push_pc = perf_counter()
     await test.entr_point()
     stop_test = perf_counter()
     logging.warning(f'test worked in {stop_test-start_test} seconds')

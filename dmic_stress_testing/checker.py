@@ -4,7 +4,7 @@ import infi.clickhouse_orm as ico
 import time
 import datetime
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 def connect():
     try:
