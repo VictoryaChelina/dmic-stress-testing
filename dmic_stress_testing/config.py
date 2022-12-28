@@ -9,6 +9,5 @@ configuration = {
     "MARK_INTERVAL" : 10,
     "MAX_CONNECTION_ATTEMPTS" : 10,
     "ASYNC_LIMIT" : 100000,
-    "mode" : ""
-    #  Возможные значение:
+    "MODE" : "async"  #  Возможные значение: async, thread
 }

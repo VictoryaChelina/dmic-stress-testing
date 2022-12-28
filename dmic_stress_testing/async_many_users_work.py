@@ -58,6 +58,7 @@ class SpectatorTesting:
     row_insertion_time = []  # учитывает время вставки строк в базу
     total_user_connection = 0
     total_user_push = 0
+    insertion_time = 0
     last_push_pc = None
     start_time = None
     # Генерируется заданное число пользователей
@@ -126,6 +127,7 @@ class SpectatorTesting:
             running_start = perf_counter()
             await self.insert_rows_many_users()
             stop = perf_counter()
+            self.insertion_time = stop - start
             rps = self.total_user_push/(self.last_push_pc - self.start_time)
             print(f'rps: {rps}',end='\r')
         #break
@@ -194,7 +196,7 @@ class SpectatorTesting:
 
         print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
         print('Всего времени = среднее * кол-во строк'.ljust(padding), average_row_insertion * rows_num)
-        print('Всего времени потрачено:'.ljust(padding), self.total_user_push, '\n')
+        print('Всего времени потрачено:'.ljust(padding), self.insertion_time, '\n')
 
     async def entr_point(self):
         self.gen_users()
@@ -225,6 +227,15 @@ async def main():
     logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
+async def main_main(configuration):
+    start_test = perf_counter()
+    test = SpectatorTesting(configuration=configuration)
+    test.start_time = perf_counter()
+    test.last_push_pc = perf_counter()
+    await test.entr_point()
+    stop_test = perf_counter()
+    logging.warning(f'test worked in {stop_test-start_test} seconds')
+    return 0
 
 if __name__ == '__main__':
     asyncio.run(main())

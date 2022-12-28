@@ -1,7 +1,7 @@
 import argparse
 import sys 
-import os
 import json 
+import asyncio
 
 def parser():
     parser = argparse.ArgumentParser()
@@ -59,6 +59,11 @@ def parser():
         type=int, 
         help='add async tasks limit'
     )
+    parser.add_argument(
+        '--mode',
+        type=str, 
+        help='choose async or thread mode'
+    )
     args = parser.parse_args()
     return args
 
@@ -93,7 +98,15 @@ def read_config():
         result_config["MAX_CONNECTION_ATTEMPTS"] = conf.m_con_at
     if conf.async_limit != None:
         result_config["ASYNC_LIMIT"] = conf.async_limit
+    if conf.mode != None:
+        result_config["MODE"] = conf.mode
     return result_config
 
 if __name__ == '__main__':
-    read_config()
+    configuration = read_config()
+    if configuration["MODE"] == "async":
+        from dmic_stress_testing.async_many_users_work import main_main
+        asyncio.run(main_main(configuration))
+    else:
+        from dmic_stress_testing.many_users_work import main_main
+        asyncio.run(main_main(configuration))
