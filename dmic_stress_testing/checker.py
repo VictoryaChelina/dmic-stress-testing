@@ -41,12 +41,16 @@ def counting(connection):
     rows = connection.count(ScreenmarkFact)
     return rows
 
+def realtime_counting(connection):
+    while True:
+        print(f'rows in base: {connection.count(ScreenmarkFact)}', end='\r')
 
 def check():
     connection = process()
+    realtime_counting(connection)
     #reading(connection)
-    rows = counting(connection)
-    print(rows)
+    #rows = counting(connection)
+    #print(rows)
 
 
 if __name__ == '__main__':
