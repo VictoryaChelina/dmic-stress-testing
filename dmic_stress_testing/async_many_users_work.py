@@ -121,26 +121,11 @@ class SpectatorTesting:
                 # break
 
     async def timeless(self):
-        start = perf_counter()
-        start_interval = datetime.datetime.today()
-        while True:
-            running_start = perf_counter()
-            await self.insert_rows_many_users()
-            stop = perf_counter()
-            self.insertion_time = stop - start
-            rps = self.total_user_push/(self.last_push_pc - self.start_time)
-            wait = datetime.datetime.today() - start_interval
-            print(f'rps: {rps}; wait: {wait}',end='\r')
-        #break
-        # time.sleep()
-
-    async def interval(self):
         with open('some.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
+            writer = csv.writer(f, delimiter=',', quotechar='|')
             start = perf_counter()
             start_interval = datetime.datetime.today()
-            delta = datetime.timedelta(minutes=int(self.configuration['INTERVAL']))
-            while (datetime.datetime.today() - start_interval < delta):
+            while True:
                 running_start = perf_counter()
                 await self.insert_rows_many_users()
                 stop = perf_counter()
@@ -148,6 +133,29 @@ class SpectatorTesting:
                 rps = self.total_user_push/(self.last_push_pc - self.start_time)
                 wait = datetime.datetime.today() - start_interval
                 writer.writerow([rps, wait])
+                print(f'rps: {rps}; wait: {wait}',end='\r')
+                
+        #break
+        # time.sleep()
+
+    async def interval(self):
+        with open('some.csv', 'w', newline='') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='|')
+            start = perf_counter()
+            start_interval = datetime.datetime.today()
+            delta = datetime.timedelta(minutes=int(self.configuration['INTERVAL']))
+            log_delta = datetime.timedelta(seconds=1)
+            last_log = datetime.datetime.today()
+            while (datetime.datetime.today() - start_interval < delta):
+                running_start = perf_counter()
+                await self.insert_rows_many_users()
+                stop = perf_counter()
+                self.insertion_time = stop - start
+                rps = self.total_user_push/(self.last_push_pc - self.start_time)
+                wait = datetime.datetime.today() - start_interval
+                if datetime.datetime.today() - last_log > log_delta:
+                    writer.writerow([rps, wait])
+                    last_log = datetime.datetime.today()
                 print(f'rps: {rps}; wait: {wait}',end='\r')
 
     # Подключение клиента 
@@ -225,13 +233,18 @@ class SpectatorTesting:
                 await self.timeless()
             else:
                 await self.interval()
-        except:
+        except KeyboardInterrupt:
             print("Interruption")
             while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
                 await asyncio.sleep(0)
             await self.close_connections()
             self.metrics()
         else:
+            while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
+                await asyncio.sleep(0)
+            await self.close_connections()
+            self.metrics()
+        finally:
             while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
                 await asyncio.sleep(0)
             await self.close_connections()
