@@ -133,6 +133,19 @@ class SpectatorTesting:
         #break
         # time.sleep()
 
+    async def interval(self):
+        start = perf_counter()
+        start_interval = datetime.datetime.today()
+        delta = datetime.timedelta(minutes=int(self.configuration['INTERVAL']))
+        while (datetime.datetime.today() - start_interval < delta):
+            running_start = perf_counter()
+            await self.insert_rows_many_users()
+            stop = perf_counter()
+            self.insertion_time = stop - start
+            rps = self.total_user_push/(self.last_push_pc - self.start_time)
+            wait = datetime.datetime.today() - start_interval
+            print(f'rps: {rps}; wait: {wait}',end='\r')
+
     # Подключение клиента 
     async def connect_client(self, id):
         start = perf_counter()
@@ -196,13 +209,17 @@ class SpectatorTesting:
 
         print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
         print('Всего времени = среднее * кол-во строк'.ljust(padding), average_row_insertion * rows_num)
+        print('Всего строк было отправлено:'.ljust(padding), self.total_user_push)
         print('Всего времени потрачено:'.ljust(padding), self.insertion_time, '\n')
 
     async def entr_point(self):
         self.gen_users()
         await self.connect_clients()
         try:
-            await self.timeless()
+            if self.configuration['INTERVAL'] == 'timeless':
+                await self.timeless()
+            else:
+                await self.interval()
         except:
             print("Interruption")
             while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:

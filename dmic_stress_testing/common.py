@@ -64,6 +64,11 @@ def parser():
         type=str, 
         help='choose async or thread mode'
     )
+    parser.add_argument(
+        '--interval',
+        type=str, 
+        help='add time for test or "timeless" if you want timeless test'
+    )
     args = parser.parse_args()
     return args
 
@@ -100,6 +105,8 @@ def read_config():
         result_config["ASYNC_LIMIT"] = conf.async_limit
     if conf.mode != None:
         result_config["MODE"] = conf.mode
+    if conf.interval != None:
+        result_config["INTERVAL"] = conf.interval
     return result_config
 
 if __name__ == '__main__':
@@ -109,4 +116,4 @@ if __name__ == '__main__':
         asyncio.run(main_main(configuration))
     else:
         from dmic_stress_testing.many_users_work import main_main
-        asyncio.run(main_main(configuration))
+        main_main(configuration)
