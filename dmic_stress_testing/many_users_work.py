@@ -284,9 +284,8 @@ class SpectatorTesting:
         while True:
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
-            break
-        stop = perf_counter()
-        self.total_user_push = stop - start
+            stop = perf_counter()
+            self.total_user_push = stop - start
     
     def metrics(self):
         row_generation = np.array(self.row_generation_time)
@@ -330,10 +329,17 @@ class SpectatorTesting:
         self.connect_users()  # Пользователи подключаются к базе
         end_connect = perf_counter()
         logging.warning(f'Connected users {len(self.users)} in {end_connect-end_gen} seconds')
-        self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
-        end_push = perf_counter()
-        logging.warning(f'pushed rows in {end_push-end_connect} seconds')
-        self.metrics()
+        try:
+            self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
+        except KeyboardInterrupt:
+            print("Interruption")
+            end_push = perf_counter()
+            logging.warning(f'pushed rows in {end_push-end_connect} seconds')
+            self.metrics()
+        else:
+            end_push = perf_counter()
+            logging.warning(f'pushed rows in {end_push-end_connect} seconds')
+            self.metrics()
 
 
 def result_config(config):

@@ -199,11 +199,19 @@ class SpectatorTesting:
     async def entr_point(self):
         self.gen_users()
         await self.connect_clients()
-        await self.timeless()
-        while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
-            await asyncio.sleep(0)
-        await self.close_connections()
-        self.metrics()
+        try:
+            await self.timeless()
+        except:
+            print("Interruption")
+            while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
+                await asyncio.sleep(0)
+            await self.close_connections()
+            self.metrics()
+        else:
+            while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
+                await asyncio.sleep(0)
+            await self.close_connections()
+            self.metrics()
 
 
 async def main():
