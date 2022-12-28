@@ -93,7 +93,6 @@ def read_config():
         result_config["MAX_CONNECTION_ATTEMPTS"] = conf.m_con_at
     if conf.async_limit != None:
         result_config["ASYNC_LIMIT"] = conf.async_limit
-    print(configuration)
     return result_config
 
 if __name__ == '__main__':

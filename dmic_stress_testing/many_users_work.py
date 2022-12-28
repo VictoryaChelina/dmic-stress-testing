@@ -2,6 +2,7 @@ import datetime
 import time
 from time import perf_counter
 import dmic_stress_testing.random_marker as rm
+from dmic_stress_testing.common import read_config
 import infi.clickhouse_orm as ico
 from random import randint, random
 from enum import Enum
@@ -13,60 +14,60 @@ import numpy as np
 import argparse
 import json 
 
-def parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--config',
-        type=str, 
-        default='config.json',
-        help='give config for sress-test')
-    parser.add_argument(
-        '--db',
-        type=str, 
-        help='add DB_URL'
-    )
-    parser.add_argument(
-        '--conn-int',
-        type=int, 
-        help='add connection interval'
-    )
-    parser.add_argument(
-        '--rows',
-        type=int, 
-        help='add rows number per one user'
-    )
-    parser.add_argument(
-        '--users',
-        type=int, 
-        help='add users number per one department'
-    )
-    parser.add_argument(
-        '--depart',
-        type=int, 
-        help='add departments number'
-    )
-    parser.add_argument(
-        '--batch',
-        type=int, 
-        help='add batch size'
-    )
-    parser.add_argument(
-        '--p-int',
-        type=int, 
-        help='add push interval (in seconds)'
-    )
-    parser.add_argument(
-        '--m-int',
-        type=int, 
-        help='add mark interval for screenmark'
-    )
-    parser.add_argument(
-        '--m-con-at',
-        type=int, 
-        help='add max connection attempts for 1 user'
-    )
-    args = parser.parse_args()
-    return args
+# def parser():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument(
+#         '--config',
+#         type=str, 
+#         default='config.json',
+#         help='give config for sress-test')
+#     parser.add_argument(
+#         '--db',
+#         type=str, 
+#         help='add DB_URL'
+#     )
+#     parser.add_argument(
+#         '--conn-int',
+#         type=int, 
+#         help='add connection interval'
+#     )
+#     parser.add_argument(
+#         '--rows',
+#         type=int, 
+#         help='add rows number per one user'
+#     )
+#     parser.add_argument(
+#         '--users',
+#         type=int, 
+#         help='add users number per one department'
+#     )
+#     parser.add_argument(
+#         '--depart',
+#         type=int, 
+#         help='add departments number'
+#     )
+#     parser.add_argument(
+#         '--batch',
+#         type=int, 
+#         help='add batch size'
+#     )
+#     parser.add_argument(
+#         '--p-int',
+#         type=int, 
+#         help='add push interval (in seconds)'
+#     )
+#     parser.add_argument(
+#         '--m-int',
+#         type=int, 
+#         help='add mark interval for screenmark'
+#     )
+#     parser.add_argument(
+#         '--m-con-at',
+#         type=int, 
+#         help='add max connection attempts for 1 user'
+#     )
+#     args = parser.parse_args()
+#     return args
 
 
 '''
@@ -313,7 +314,6 @@ class SpectatorTesting:
         print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
         print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
 
-        print(average_user_connection)
         print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
         print('Всего подключений:'.ljust(padding), connections_num)
         print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
@@ -350,33 +350,32 @@ def result_config(config):
 
 
 
-def read_config():
-    config = parser()
-    configuration = result_config(config.config)
-    if config.db != None:
-        configuration["DB_URL"] = config.db
-    if config.conn_int != None:
-        configuration["CONNECTION_INTERVAL"] = config.conn_int
-    if config.rows != None:
-        configuration["ROWS_NUM"] = config.rows
-    if config.users != None:
-        configuration["USERS_NUM"] = config.users
-    if config.depart != None:
-        configuration["DEPARTMENT_NUM"] = config.depart
-    if config.batch != None:
-        configuration["BATCH_SIZE"] = config.batch
-    if config.p_int != None:
-        configuration["PUSH_INT"] = config.p_int
-    if config.m_int != None:
-        configuration["MARK_INTERVAL"] = config.m_int
-    if config.m_con_at != None:
-        configuration["MAX_CONNECTION_ATTEMPTS"] = config.m_con_at
-    return configuration
+# def read_config():
+#     config = parser()
+#     configuration = result_config(config.config)
+#     if config.db != None:
+#         configuration["DB_URL"] = config.db
+#     if config.conn_int != None:
+#         configuration["CONNECTION_INTERVAL"] = config.conn_int
+#     if config.rows != None:
+#         configuration["ROWS_NUM"] = config.rows
+#     if config.users != None:
+#         configuration["USERS_NUM"] = config.users
+#     if config.depart != None:
+#         configuration["DEPARTMENT_NUM"] = config.depart
+#     if config.batch != None:
+#         configuration["BATCH_SIZE"] = config.batch
+#     if config.p_int != None:
+#         configuration["PUSH_INT"] = config.p_int
+#     if config.m_int != None:
+#         configuration["MARK_INTERVAL"] = config.m_int
+#     if config.m_con_at != None:
+#         configuration["MAX_CONNECTION_ATTEMPTS"] = config.m_con_at
+#     return configuration
 
 
 def main():
     configuration = read_config()
-    print(configuration)
     start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
