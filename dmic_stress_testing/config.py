@@ -3,7 +3,7 @@ configuration = {
     "CONNECTION_INTERVAL" : 1,
     "ROWS_NUM" : 6,
     "USERS_NUM" : 1,
-    "DEPARTMENT_NUM": 1000,
+    "DEPARTMENT_NUM": 100,
     "BATCH_SIZE" : 100,
     "PUSH_INT" : 0,
     "MARK_INTERVAL" : 10,

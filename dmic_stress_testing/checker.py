@@ -4,7 +4,7 @@ import infi.clickhouse_orm as ico
 import time
 import datetime
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 
 def connect():
     try:
@@ -20,7 +20,7 @@ def connect():
     except Exception as ex_:
         logging.info(f'{uname_} {pass_}: Подключение...')
         #traceback.print_exc()
-    return False
+    return False, False
 
 
 def process():
