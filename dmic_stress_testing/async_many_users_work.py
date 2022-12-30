@@ -12,7 +12,7 @@ from aiochclient import ChClient
 from aiohttp import ClientSession
  
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 
 
 # Модель таблиц
@@ -111,13 +111,13 @@ class SpectatorTesting:
         self.last_insertion_time = stop
         self.last_push_pc = perf_counter()
         self.row_insertion_time.append((stop-start)/len(rows))
-        self.rows_per_second.append(len(rows)/(stop-start))
         self.total_user_push += self.configuration['ROWS_NUM']
-        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-        logging.info(f'client with id {id} insert rows')
-        rps = self.total_user_push / (self.last_insertion_time - self.start_insertion_time)
+        #logging.info(f'client with id {id} insert rows')
+        rps = self.total_user_push / datetime.datetime.timestamp(self.start_insertion_time)
+        self.rows_per_second.append(rps)
+        logging.info(f'rps {rps} insert rows')
         print(f'rps: {rps}', end='\r')
-        with open('rps.csv', 'w', newline='') as f:
+        with open('./some.csv', 'w', newline='') as f:
             writer = csv.writer(f, delimiter=',', quotechar='|')
             writer.writerow([self.last_insertion_time, self.total_user_push])
 
@@ -214,8 +214,8 @@ class SpectatorTesting:
         self.gen_users()
         await self.connect_clients()
         if self.configuration['INTERVAL'] == 'timeless':
-            self.start_insertion_time = datetime.datetime.today()
-            logging.debug(f'start')
+            self.start_insertion_time = datetime.datetime.now()
+            logging.debug(f'start timeless')
             await self.timeless()
         else:
             self.start_insertion_time = datetime.datetime.today()
@@ -238,7 +238,7 @@ async def main():
     await test.entr_point()
     stop_test = perf_counter()
     logging.warning(f'test worked in {stop_test-start_test} seconds')
-    return test
+    return
 
 async def main_main(configuration):
     start_test = perf_counter()
@@ -252,7 +252,7 @@ async def main_main(configuration):
 
 if __name__ == '__main__':
     try:
-        test = asyncio.run(main())
+        asyncio.run(main())
     except KeyboardInterrupt:
         print('KB interrupt')
 
