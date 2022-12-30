@@ -44,6 +44,7 @@ class Row():
 class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
+        self.f = open('./some.csv', 'a', newline='')
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     users = {}  # Словарь id: rm.RandUser 
     rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
@@ -55,6 +56,8 @@ class SpectatorTesting:
     total_user_push = 0
     insertion_time = 0
     start_time = None
+    start_connection_time = None
+    stop_connection_time = None
     start_insertion_time = None
     last_insertion_time = None
 
@@ -99,13 +102,13 @@ class SpectatorTesting:
         self.last_insertion_time = perf_counter()
         self.total_user_push += self.configuration['ROWS_NUM']
         self.user_rows_count[id] += self.configuration['ROWS_NUM']
-        rps = self.total_user_push / datetime.datetime.timestamp(self.start_insertion_time)
+        time_from_start = self.last_insertion_time - self.start_insertion_time
+        rps = self.total_user_push / time_from_start
         self.rows_per_second.append(rps)
         logging.info(f'rps {rps} insert rows')
         print(f'rps: {rps}', end='\r')
-        with open('./some.csv', 'a', newline='') as f:
-            writer = csv.writer(f, delimiter=',', quotechar='|')
-            writer.writerow([self.last_insertion_time, self.total_user_push])
+        writer = csv.writer(self.f, delimiter=',', quotechar='|')
+        writer.writerow([time_from_start, self.total_user_push])
 
     async def insert_rows_many_users(self):
         for id in self.connections:
@@ -170,20 +173,26 @@ class SpectatorTesting:
         print('Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
         print('Total number of rows:'.ljust(padding), self.total_user_push, '\n')
 
+        print('Время на подключение:'.ljust(padding), self.stop_connection_time - self.start_connection_time, '\n')
+
         print('Средний rps:'.ljust(padding), average_rps, '\n')
         print('Время окончания теста:'.ljust(padding), datetime.datetime.today(), '\n')
 
     async def entr_point(self):
         self.gen_users()
+
+        self.start_connection_time = perf_counter()
         await self.connect_clients()
+        self.stop_connection_time = perf_counter()
+
+        self.start_insertion_time = perf_counter()
         if self.configuration['INTERVAL'] == 'timeless':
-            self.start_insertion_time = datetime.datetime.now()
             logging.debug(f'start timeless')
             await self.timeless()
         else:
-            self.start_insertion_time = datetime.datetime.today()
             logging.debug(f'start interval')
             await self.interval()
+        
         print('Closing connections')
         while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
             await asyncio.sleep(0)

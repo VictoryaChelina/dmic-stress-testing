@@ -11,8 +11,6 @@ def read_log():
         csvreader = csv.reader(f, delimiter=',', quotechar='|')
         for row in csvreader:
             time.append(float(row[0]))
-            print(float(row[0]))
-            print(int(row[1]))
             rows.append(int(row[1]))
     return np.array(time), np.array(rows)
 
