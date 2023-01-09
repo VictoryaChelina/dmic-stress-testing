@@ -13,31 +13,6 @@ from aiohttp import ClientSession
  
 
 logging.basicConfig(level=logging.WARNING)
-
-
-# Модель таблиц
-class Row():
-    def __init__(
-        self,
-        user_name,
-        user_domain,
-        marker, 
-        department,
-        root_disk_serial,
-        ipv4_address,
-        hw_address):
-
-        dt = None
-        dtm = None
-        report_time = None
-        user_name = user_name
-        user_domain = user_domain
-        marker = marker
-        department = department
-        root_disk_serial = root_disk_serial
-        ipv4_address = ipv4_address
-        hw_address = hw_address
-        #operation_type = ico.Enum8Field(Operation)
         
 
 # Класс отправки псевдологов
@@ -125,7 +100,14 @@ class SpectatorTesting:
 
     async def interval(self):
         start_interval = datetime.datetime.today()
-        delta = datetime.timedelta(minutes=int(self.configuration['INTERVAL']))
+        mesurment = self.configuration['INTERVAL'][1]
+        amount = int(self.configuration['INTERVAL'][0])
+        if mesurment == 's':
+            delta = datetime.timedelta(seconds=amount)
+        elif mesurment == 'm':
+            delta = datetime.timedelta(minutes=amount)
+        else:
+            delta = datetime.timedelta(hours=amount)
         while (datetime.datetime.today() - start_interval < delta):
             await self.insert_rows_many_users()
 
@@ -193,7 +175,7 @@ class SpectatorTesting:
         self.stop_connection_time = perf_counter()
 
         self.start_insertion_time = perf_counter()
-        if self.configuration['INTERVAL'] == 'timeless':
+        if self.configuration['INTERVAL'][0] == 'timeless':
             logging.debug(f'start timeless')
             await self.timeless()
         else:
@@ -214,13 +196,6 @@ async def main(test):
     logging.warning(f'test worked in {stop_test-start_test} seconds')
     return
 
-async def main_main(test):
-    start_test = perf_counter()
-    #test = SpectatorTesting(configuration=configuration)
-    await test.entr_point()
-    stop_test = perf_counter()
-    logging.warning(f'test worked in {stop_test-start_test} seconds')
-    return 0
 
 if __name__ == '__main__':
     configuration = read_config()

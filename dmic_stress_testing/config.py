@@ -9,6 +9,11 @@ configuration = {
     "MARK_INTERVAL" : 10,
     "MAX_CONNECTION_ATTEMPTS" : 10,
     "ASYNC_LIMIT" : 100000,
-    "MODE" : "async",  #  Возможные значение: async, thread
-    "INTERVAL" : 1  #  Время, на которое запускается тест (в минутах) или timeless, если нужен вечный цикл
+
+    #  Возможные значение: async, thread
+    "MODE" : "async",  
+
+    #  Время, на которое запускается тест (в секундах 's', минутах 'm' или часах 'h') 
+    #  или timeless, если нужен вечный цикл
+    "INTERVAL" : [10, 's']  
 }
