@@ -156,16 +156,16 @@ class SpectatorTesting:
         padding = 40
         print('МЕТРИКИ:\n')
         
-        print('ASYNC_LIMIT:'.ljust(padding), self.configuration['ASYNC_LIMIT'])
-        print('Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
-        print('Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
-        print('Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
-        print('Total number of rows:'.ljust(padding), self.total_user_push, '\n')
+        print(':', 'ASYNC_LIMIT:'.ljust(padding), self.configuration['ASYNC_LIMIT'])
+        print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
+        print(':', 'Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
+        print(':', 'Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
+        print(':', 'Total number of rows:'.ljust(padding), self.total_user_push, '\n')
 
-        print('Время на подключение:'.ljust(padding), self.stop_connection_time - self.start_connection_time, '\n')
+        print(':', 'Время на подключение:'.ljust(padding), self.stop_connection_time - self.start_connection_time, '\n')
 
-        print('Средний rps:'.ljust(padding), average_rps, '\n')
-        print('Время окончания теста:'.ljust(padding), datetime.datetime.today(), '\n')
+        print(':', 'Средний rps:'.ljust(padding), average_rps, '\n')
+        print(':', 'Время окончания теста:'.ljust(padding), datetime.datetime.today(), '\n')
 
     async def entr_point(self):
         self.gen_users()
