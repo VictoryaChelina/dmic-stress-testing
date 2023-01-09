@@ -44,7 +44,7 @@ class Row():
 class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
-        self.f = open('./some.csv', 'a', newline='')
+        self.f = open('./some.csv', 'w', newline='')
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     users = {}  # Словарь id: rm.RandUser 
     rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
@@ -55,7 +55,6 @@ class SpectatorTesting:
     rows_per_second = []  # Строк в секунду (при каждом добавлении от пользователя)
     total_user_push = 0
     insertion_time = 0
-    start_time = None
     start_connection_time = None
     stop_connection_time = None
     start_insertion_time = None
@@ -105,10 +104,10 @@ class SpectatorTesting:
         time_from_start = self.last_insertion_time - self.start_insertion_time
         rps = self.total_user_push / time_from_start
         self.rows_per_second.append(rps)
-        logging.info(f'rps {rps} insert rows')
+        logging.info(f'rps {rps}')
         print(f'rps: {rps}', end='\r')
         writer = csv.writer(self.f, delimiter=',', quotechar='|')
-        writer.writerow([time_from_start, self.total_user_push])
+        writer.writerow([time_from_start, self.total_user_push, rps])
 
     async def insert_rows_many_users(self):
         for id in self.connections:
@@ -159,6 +158,14 @@ class SpectatorTesting:
             await client.close()
             cnt += 1
             logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
+    
+    def interruption_close_connections(self):
+        cnt = 0
+        for id in self.connections:
+            client = self.connections[id]
+            asyncio.run(client.close())
+            cnt += 1
+            logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
 
     def metrics(self):
         rps = np.array(self.rows_per_second)
@@ -166,8 +173,8 @@ class SpectatorTesting:
 
         padding = 40
         print('МЕТРИКИ:\n')
+        
         print('ASYNC_LIMIT:'.ljust(padding), self.configuration['ASYNC_LIMIT'])
-
         print('Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print('Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
         print('Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
@@ -200,29 +207,29 @@ class SpectatorTesting:
         self.metrics()
 
 
-async def main():
-    configuration = read_config()
+async def main(test):
     start_test = perf_counter()
-    test = SpectatorTesting(configuration=configuration)
-    test.start_time = perf_counter()
     await test.entr_point()
     stop_test = perf_counter()
     logging.warning(f'test worked in {stop_test-start_test} seconds')
     return
 
-async def main_main(configuration):
+async def main_main(test):
     start_test = perf_counter()
-    test = SpectatorTesting(configuration=configuration)
-    test.start_time = perf_counter()
+    #test = SpectatorTesting(configuration=configuration)
     await test.entr_point()
     stop_test = perf_counter()
     logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 if __name__ == '__main__':
+    configuration = read_config()
+    test = SpectatorTesting(configuration=configuration)
     try:
-        asyncio.run(main())
+        asyncio.run(main(test))
     except KeyboardInterrupt:
         print('KB interrupt')
+        test.interruption_close_connections()
+        test.metrics()
 
 

@@ -112,8 +112,14 @@ def read_config():
 if __name__ == '__main__':
     configuration = read_config()
     if configuration["MODE"] == "async":
-        from dmic_stress_testing.async_many_users_work import main_main
-        asyncio.run(main_main(configuration))
+        from dmic_stress_testing.async_many_users_work import main, SpectatorTesting
+        test = SpectatorTesting(configuration=configuration)
+        try:
+            asyncio.run(main(test))
+        except KeyboardInterrupt:
+            print('KB interrupt')
+            test.interruption_close_connections()
+            test.metrics()    
     else:
         from dmic_stress_testing.many_users_work import main_main
         main_main(configuration)

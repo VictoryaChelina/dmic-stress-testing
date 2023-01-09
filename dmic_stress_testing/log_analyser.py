@@ -7,12 +7,14 @@ import csv
 def read_log():
     time = []
     rows = []
+    rps = []
     with open('some.csv', 'r', newline='') as f:
         csvreader = csv.reader(f, delimiter=',', quotechar='|')
         for row in csvreader:
             time.append(float(row[0]))
             rows.append(int(row[1]))
-    return np.array(time), np.array(rows)
+            rps.append(float(row[2]))
+    return np.array(time), np.array(rows), np.array(rps)
 
 def draw_graph(x, y):
     fig, ax = plt.subplots()
@@ -22,7 +24,7 @@ def draw_graph(x, y):
     plt.show()
 
 def main():
-    time, rows = read_log()
+    time, rows, rps = read_log()
     draw_graph(time, rows)
 
 if __name__ == '__main__':
