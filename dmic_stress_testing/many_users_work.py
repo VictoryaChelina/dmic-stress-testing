@@ -13,6 +13,7 @@ import concurrent.futures
 import numpy as np
 import argparse
 import json 
+import csv
 
 
 THREAD = True
@@ -54,6 +55,7 @@ class ScreenmarkFact(ico.Model):
 class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
+        self.f = open('./' + self.configuration['LOG'], 'w', newline='')
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     not_connected_users = []  # Список пользователей, которые не смогли подключиться к базе за максимальное число попыток
     users = {}  # Словарь id: rm.RandUser 
@@ -62,11 +64,13 @@ class SpectatorTesting:
     user_rows_count = {}  # Словарь id: всего строк отправлено от пользователя
 
     # Сбор метрик
-    row_generation_time = []  # учитывается время добавления к заготовленной строке временных значений 
-    user_connection_time = []  # учитывает время подключения одного пользователя (если в итоге подключился)
-    row_insertion_time = []  # учитывает время вставки строк в базу
-    total_user_connection = 0
+    rows_per_second = []  # Строк в секунду (при каждом добавлении от пользователя)
     total_user_push = 0
+    insertion_time = 0
+    start_connection_time = None
+    stop_connection_time = None
+    start_insertion_time = None
+    last_insertion_time = None
 
 
     # Генерируется заданное число пользователей
@@ -154,16 +158,12 @@ class SpectatorTesting:
             row.dtm = mark_time
             row.report_time = report_time
             stop = perf_counter()
-            self.row_generation_time.append(stop-start)
             rows.append(row)
         return rows
 
     def insertion(self, id, rows):
-        start = perf_counter()
         self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
-        stop = perf_counter()
-        self.row_insertion_time.append((stop - start)/len(rows))
-
+    
     def push_update_one_user(self, id):
         report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
         if report_time - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
@@ -175,59 +175,73 @@ class SpectatorTesting:
                 self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
 
+            self.last_insertion_time = perf_counter()
+            self.total_user_push += self.configuration['ROWS_NUM']
+            self.user_rows_count[id] += self.configuration['ROWS_NUM']
+            time_from_start = self.last_insertion_time - self.start_insertion_time
+            rps = self.total_user_push / time_from_start
+            self.rows_per_second.append(rps)
+            logging.info(f'rps {rps}')
+            print(f'rps: {rps}', end='\r')
+            writer = csv.writer(self.f, delimiter=',', quotechar='|')
+            writer.writerow([time_from_start, self.total_user_push, rps])
+
     # Запускает цикл по connections для отправки логов
-    def pushing_updates(self):
-        start = perf_counter()
+    def timeless(self):
         while True:
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
-            stop = perf_counter()
-            self.total_user_push = stop - start
+
+    def interval(self):
+        start_interval = datetime.datetime.today()
+        mesurment = self.configuration['INTERVAL'][1]
+        amount = int(self.configuration['INTERVAL'][0])
+        if mesurment == 's':
+            delta = datetime.timedelta(seconds=amount)
+        elif mesurment == 'm':
+            delta = datetime.timedelta(minutes=amount)
+        else:
+            delta = datetime.timedelta(hours=amount)
+        while (datetime.datetime.today() - start_interval < delta):
+            for id in self.users.keys():
+                self.push_update_one_user(id=id)
     
     def metrics(self):
-        row_generation = np.array(self.row_generation_time)
-        average_row_generation = np.average(row_generation)
-        rows_num = row_generation.size
-        total_row_generation = np.sum(row_generation)
-
-        user_connection = np.array(self.user_connection_time)
-        average_user_connection = np.average(user_connection)
-        connections_num = user_connection.size
-
-        row_insertion = np.array(self.row_insertion_time)
-        average_row_insertion = np.average(row_insertion)
+        rps = np.array(self.rows_per_second)
+        average_rps = np.average(rps)
 
         padding = 40
         print('МЕТРИКИ:\n')
-        print('Threading for push updates:'.ljust(padding), THREAD)
-        print('ThreadPool for connect users:'.ljust(padding), POOL, '\n')
+        
+        print(':', 'ASYNC_LIMIT:'.ljust(padding), 'This is thread mode')
+        print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
+        print(':', 'Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
+        print(':', 'Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
+        print(':', 'Total number of rows:'.ljust(padding), self.total_user_push, '\n')
 
-        print('Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
-        print('Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
-        print('Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'], '\n')
+        print(':', 'Время на подключение:'.ljust(padding), self.stop_connection_time - self.start_connection_time, '\n')
 
-        print('Среднее время на генерацию строки:'.ljust(padding), average_row_generation)
-        print('Всего строк было сгенерировано:'.ljust(padding), rows_num)
-        print('Всего времени потрачено:'.ljust(padding), total_row_generation, '\n')
-
-        print('Среднее время подключения к базе:'.ljust(padding), average_user_connection)
-        print('Всего подключений:'.ljust(padding), connections_num)
-        print('Всего времени потрачено:'.ljust(padding), self.total_user_connection, '\n')
-
-        print('Среднее время вставки строки в базу:'.ljust(padding), average_row_insertion)
-        print('Всего времени = среднее * кол-во строк'.ljust(padding), average_row_insertion * rows_num)
-        print('Всего времени потрачено:'.ljust(padding), self.total_user_push, '\n')
+        print(':', 'Средний rps:'.ljust(padding), average_rps, '\n')
+        print(':', 'Время окончания теста:'.ljust(padding), datetime.datetime.today(), '\n')
 
     def entr_point(self):
         start_gen = perf_counter()
         self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
         end_gen = perf_counter()
         logging.warning(f'Generated users {len(self.users)} in {end_gen-start_gen} seconds')
+        self.start_connection_time = perf_counter()
         self.connect_users()  # Пользователи подключаются к базе
+        self.stop_connection_time = perf_counter()
         end_connect = perf_counter()
         logging.warning(f'Connected users {len(self.users)} in {end_connect-end_gen} seconds')
+        self.start_insertion_time = perf_counter()
         try:
-            self.pushing_updates()  # В бесконечном цикле пушатся строки от пользователей
+            if self.configuration['INTERVAL'][0] == 'timeless':
+                logging.debug(f'start timeless')
+                self.timeless()  # В бесконечном цикле пушатся строки от пользователей
+            else:
+                logging.debug(f'start interval')
+                self.interval()
         except KeyboardInterrupt:
             print("Interruption")
             end_push = perf_counter()
