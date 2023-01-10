@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.WARNING)
 class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
-        self.f = open('./some.csv', 'w', newline='')
+        self.f = open('./' + self.configuration['LOG'], 'w', newline='')
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     users = {}  # Словарь id: rm.RandUser 
     rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
@@ -63,7 +63,7 @@ class SpectatorTesting:
         report_time = datetime.datetime.today()
         mark_time = report_time
         self.rows_const_part[id][2] = report_time
-        client = self.connections[id]
+        client : ChClient = self.connections[id]
         delta = datetime.timedelta(seconds=self.configuration['MARK_INTERVAL'])
         rows = []
         for i in range(self.configuration['ROWS_NUM'], 0, -1):
@@ -200,6 +200,10 @@ async def main(test):
 if __name__ == '__main__':
     configuration = read_config()
     test = SpectatorTesting(configuration=configuration)
+
+    # policy = asyncio.WindowsSelectorEventLoopPolicy()
+    # asyncio.set_event_loop_policy(policy)
+
     try:
         asyncio.run(main(test))
     except KeyboardInterrupt:
