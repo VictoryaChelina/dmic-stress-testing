@@ -6,7 +6,7 @@ configuration = {
     "CONNECTION_INTERVAL" : 1,
 
     # Количество генерируемых строк от одного пользователя в минуту
-    "ROWS_NUM" : 1000,
+    "ROWS_NUM" : 10000,
 
     # Количество пользователей в департаменте
     "USERS_NUM" : 1,
@@ -35,17 +35,17 @@ configuration = {
     "MAX_CONNECTION_ATTEMPTS" : 10,
 
     # Максимальное число одновременно выполняющихся асинхронных задач
-    "ASYNC_LIMIT" : 3,
+    "ASYNC_LIMIT" : 1000,
 
     # Возможные значение: async, thread
     "MODE" : "async",  
 
     #  Время, на которое запускается тест (в секундах 's', минутах 'm' или часах 'h') 
     #  или timeless, если нужен вечный цикл
-    "INTERVAL" : [1, 's'],
+    "INTERVAL" : [10, 's'],
 
     #  Имя файла для записи лога
-    "LOG" : "some_3.csv"  
+    "LOG" : "some_6.csv"  
 }
 
 if __name__ == '__main__':

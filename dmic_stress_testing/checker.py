@@ -3,6 +3,7 @@ import logging
 import infi.clickhouse_orm as ico
 import time
 import datetime
+import traceback
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -19,7 +20,7 @@ def connect():
         return True, connection
     except Exception as ex_:
         logging.info(f'{uname_} {pass_}: Подключение...')
-        #traceback.print_exc()
+        traceback.print_exc()
     return False, False
 
 
@@ -33,8 +34,8 @@ def process():
     
 
 def reading(connection):
-    for row in ScreenmarkFact.objects_in(connection).filter(ScreenmarkFact.dt == datetime.date.today() - datetime.timedelta(days=12)).only('user_name'):
-        print(row.user_name)
+    for row in ScreenmarkFact.objects_in(connection).filter(ScreenmarkFact.dt == datetime.date.today()):
+        print(row.report_time)
 
 
 def counting(connection):
@@ -47,10 +48,10 @@ def realtime_counting(connection):
 
 def check():
     connection = process()
-    realtime_counting(connection)
-    #reading(connection)
-    #rows = counting(connection)
-    #print(rows)
+    # realtime_counting(connection)
+    # reading(connection)
+    rows = counting(connection)
+    print(rows)
 
 
 if __name__ == '__main__':

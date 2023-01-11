@@ -121,29 +121,22 @@ class SpectatorTesting:
     def process(self, id):
         self.connected = False
         attempts_counter = 0
-        start = perf_counter()
         while not self.connected and attempts_counter <= self.configuration['MAX_CONNECTION_ATTEMPTS']:
             attempts_counter += 1
             self.connected = self.connect(id=id)
             if not self.connected:
                 time.sleep(self.configuration['CONNECTION_INTERVAL'])
-        stop = perf_counter()
         if self.connected == False:
             self.not_connected_users.append(id)
-        else:
-            self.user_connection_time.append(stop-start)
 
     # Пользователи подключаются к базе
     def connect_users(self):
-        start = perf_counter()
         if POOL:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 executor.map(self.process, self.users.keys())
         else:
             for id in self.users.keys():
                 self.process(id=id)
-        stop = perf_counter()
-        self.total_user_connection = stop - start
 
     # Генерация строк
     def gen_rows(self, id, report_time):
@@ -152,17 +145,26 @@ class SpectatorTesting:
         delta = datetime.timedelta(seconds=self.configuration['MARK_INTERVAL'])  # Интервал между фактами маркирования 
         row = self.rows_const_part[id]  # Подготовленная строка по данному пользователю
         for i in range(self.configuration['ROWS_NUM'], 0, -1):
-            start = perf_counter()
             mark_time = report_time - delta * i  # Меняется время маркирования для записи строки
             row.dt = mark_time  # В подготовленную строку добавляются отметки времени
             row.dtm = mark_time
             row.report_time = report_time
-            stop = perf_counter()
             rows.append(row)
         return rows
 
     def insertion(self, id, rows):
         self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
+        
+        self.last_insertion_time = perf_counter()
+        self.total_user_push += self.configuration['ROWS_NUM']
+        self.user_rows_count[id] += self.configuration['ROWS_NUM']
+        time_from_start = self.last_insertion_time - self.start_insertion_time
+        rps = self.total_user_push / time_from_start
+        self.rows_per_second.append(rps)
+
+        print(f'rps: {rps}', end='\r')
+        writer = csv.writer(self.f, delimiter=',', quotechar='|')
+        writer.writerow([time_from_start, self.total_user_push, rps])
     
     def push_update_one_user(self, id):
         report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
@@ -174,17 +176,6 @@ class SpectatorTesting:
             else:
                 self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
-
-            self.last_insertion_time = perf_counter()
-            self.total_user_push += self.configuration['ROWS_NUM']
-            self.user_rows_count[id] += self.configuration['ROWS_NUM']
-            time_from_start = self.last_insertion_time - self.start_insertion_time
-            rps = self.total_user_push / time_from_start
-            self.rows_per_second.append(rps)
-            logging.info(f'rps {rps}')
-            print(f'rps: {rps}', end='\r')
-            writer = csv.writer(self.f, delimiter=',', quotechar='|')
-            writer.writerow([time_from_start, self.total_user_push, rps])
 
     # Запускает цикл по connections для отправки логов
     def timeless(self):

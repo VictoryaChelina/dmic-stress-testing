@@ -8,7 +8,7 @@ def read_log():
     time = []
     rows = []
     rps = []
-    with open('some.csv', 'r', newline='') as f:
+    with open('some_5.csv', 'r', newline='') as f:
         csvreader = csv.reader(f, delimiter=',', quotechar='|')
         for row in csvreader:
             time.append(float(row[0]))

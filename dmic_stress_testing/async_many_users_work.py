@@ -97,6 +97,7 @@ class SpectatorTesting:
     async def timeless(self):
         while True:
             await self.insert_rows_many_users()
+            break
 
     async def interval(self):
         start_interval = datetime.datetime.today()
@@ -176,15 +177,16 @@ class SpectatorTesting:
 
         self.start_insertion_time = perf_counter()
         if self.configuration['INTERVAL'][0] == 'timeless':
-            logging.debug(f'start timeless')
+            logging.warning(f'start timeless')
             await self.timeless()
         else:
-            logging.debug(f'start interval')
+            logging.warning(f'start interval')
             await self.interval()
         
-        print('Closing connections')
         while len(asyncio.all_tasks(asyncio.get_running_loop())) > 1:
             await asyncio.sleep(0)
+
+        print('Closing connections')
         await self.close_connections()
         self.metrics()
 
