@@ -94,10 +94,9 @@ class SpectatorTesting:
             else:
                 await asyncio.sleep(0)
 
-    async def timeless(self):
-        while True:
+    async def loops(self):
+        for _ in range(self.configuration['INTERVAL'][1]):
             await self.insert_rows_many_users()
-            break
 
     async def interval(self):
         start_interval = datetime.datetime.today()
@@ -176,9 +175,9 @@ class SpectatorTesting:
         self.stop_connection_time = perf_counter()
 
         self.start_insertion_time = perf_counter()
-        if self.configuration['INTERVAL'][0] == 'timeless':
-            logging.warning(f'start timeless')
-            await self.timeless()
+        if self.configuration['INTERVAL'][0] == 'loops':
+            logging.warning(f'start loops')
+            await self.loops()
         else:
             logging.warning(f'start interval')
             await self.interval()
