@@ -154,7 +154,7 @@ class SpectatorTesting:
 
     def insertion(self, id, rows):
         self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
-        
+
         self.last_insertion_time = perf_counter()
         self.total_user_push += self.configuration['ROWS_NUM']
         self.user_rows_count[id] += self.configuration['ROWS_NUM']
@@ -178,8 +178,8 @@ class SpectatorTesting:
             self.last_push_time[id] = report_time
 
     # Запускает цикл по connections для отправки логов
-    def timeless(self):
-        while True:
+    def loops(self):
+        for _ in range(self.configuration['INTERVAL'][1]):
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
 
@@ -198,8 +198,7 @@ class SpectatorTesting:
                 self.push_update_one_user(id=id)
     
     def metrics(self):
-        rps = np.array(self.rows_per_second)
-        average_rps = np.average(rps)
+        average_rps = self.total_user_push / (self.stop_connection_time - self.start_connection_time)
 
         padding = 40
         print('МЕТРИКИ:\n')
@@ -227,20 +226,20 @@ class SpectatorTesting:
         logging.warning(f'Connected users {len(self.users)} in {end_connect-end_gen} seconds')
         self.start_insertion_time = perf_counter()
         try:
-            if self.configuration['INTERVAL'][0] == 'timeless':
-                logging.debug(f'start timeless')
-                self.timeless()  # В бесконечном цикле пушатся строки от пользователей
+            if self.configuration['INTERVAL'][0] == 'loops':
+                logging.debug(f'start loops')
+                self.loops()  # В бесконечном цикле пушатся строки от пользователей
             else:
                 logging.debug(f'start interval')
                 self.interval()
         except KeyboardInterrupt:
             print("Interruption")
+        finally:
             end_push = perf_counter()
             logging.warning(f'pushed rows in {end_push-end_connect} seconds')
-            self.metrics()
-        else:
-            end_push = perf_counter()
-            logging.warning(f'pushed rows in {end_push-end_connect} seconds')
+            print()
+            while threading.active_count() > 1:
+                print(threading.active_count(), end='\r')
             self.metrics()
 
 
