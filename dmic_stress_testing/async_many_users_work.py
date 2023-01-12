@@ -85,19 +85,25 @@ class SpectatorTesting:
         rps = self.total_user_push / time_from_start
         self.rows_per_second.append(rps)
         logging.info(f'rps {rps}')
-        # print(f'rps: {rps}', end='\r')
+        print(f'rps: {rps}', end='\r')
         writer = csv.writer(self.f, delimiter=',', quotechar='|')
         writer.writerow([time_from_start, self.total_user_push, rps])
 
     async def insert_rows_many_users(self):
+        tasks = []
         for id in self.connections:
-            if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["ASYNC_LIMIT"] and \
+            if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["LIMIT"] and \
             datetime.datetime.today() - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
                 logging.debug(f'{id} insert rows')
-                asyncio.create_task(self.insert_rows_one_user(id))
+                task = asyncio.create_task(self.insert_rows_one_user(id))
+                tasks.append(task)
                 self.last_push_time[id] = datetime.datetime.today()
             else:
                 await asyncio.sleep(0)
+            try:
+                await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            except asyncio.exceptions.CancelledError:
+                print("KB interrupt inside insert_rows_many_users")
 
     async def loops(self):
         for _ in range(self.configuration['AMOUNT']):
@@ -157,7 +163,7 @@ class SpectatorTesting:
         padding = 40
         print('МЕТРИКИ:\n')
         
-        print(':', 'ASYNC_LIMIT:'.ljust(padding), self.configuration['ASYNC_LIMIT'])
+        print(':', 'LIMIT:'.ljust(padding), self.configuration['LIMIT'])
         print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print(':', 'Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
         print(':', 'Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
@@ -202,15 +208,11 @@ async def main(test):
 if __name__ == '__main__':
     configuration = read_config()
     test = SpectatorTesting(configuration=configuration)
-
-    # policy = asyncio.WindowsSelectorEventLoopPolicy()
-    # asyncio.set_event_loop_policy(policy)
-
-    try:
-        asyncio.run(main(test))
-    except KeyboardInterrupt:
-        print('KB interrupt')
-        test.interruption_close_connections()
-        test.metrics()
+    # try:
+    asyncio.run(main(test))
+    # except KeyboardInterrupt:
+    #     print('KB interrupt')
+    #     test.interruption_close_connections()
+    #     test.metrics()
 
 
