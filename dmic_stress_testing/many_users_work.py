@@ -186,7 +186,8 @@ class SpectatorTesting:
         start_interval = datetime.datetime.today()
         amount = self.configuration['AMOUNT']
         delta = datetime.timedelta(seconds=amount)
-        while (datetime.datetime.today() - start_interval < delta):
+        while (datetime.datetime.today() - start_interval < delta and \
+            threading.active_count() < self.configuration[self.configuration["LIMIT"]]):
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
     
@@ -196,7 +197,7 @@ class SpectatorTesting:
         padding = 40
         print('МЕТРИКИ:\n')
         
-        print(':', 'ASYNC_LIMIT:'.ljust(padding), 'This is thread mode')
+        print(':', 'LIMIT:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print(':', 'Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
         print(':', 'Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
@@ -232,21 +233,8 @@ class SpectatorTesting:
             logging.warning(f'pushed rows in {end_push-end_connect} seconds')
             print()
             while threading.active_count() > 1:
-                print(threading.active_count(), end='\r')
+                continue
             self.metrics()
-
-
-def result_config(config):
-    with open('config.json') as defualt_config:
-        default = json.load(defualt_config)
-    with open(config) as alter_config:
-        alter = json.load(alter_config)
-    if default == alter:
-        return alter
-    for key in default.keys():
-        if key not in alter.keys():
-            alter[key] = default[key]
-    return alter
 
 
 def main():
