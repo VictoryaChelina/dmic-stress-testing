@@ -23,11 +23,13 @@ class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
         self.f = open('./' + self.configuration['LOG'], 'w', newline='')
+
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     users = {}  # Словарь id: rm.RandUser 
     rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
     last_push_time = {}  # Словарь id: время последней отправки с пользователя
     user_rows_count = {}  # Словарь id: всего строк отправлено от пользователя
+    session = None
 
     # Сбор метрик
     rows_per_second = []  # Строк в секунду (при каждом добавлении от пользователя)
@@ -109,14 +111,13 @@ class SpectatorTesting:
             await self.insert_rows_many_users()
 
     # Подключение клиента 
-    async def connect_client(self, id):
-        s = ClientSession()
+    async def connect_client(self, id, session):
         user = self.users[id]
         department_number = int(user.department)
         uname_ = f'department{department_number:05}'
         pass_ = f'pass{department_number:05}'
         client = ChClient(
-            session=s,
+            session=session,
             url=self.configuration['DB_URL'],
             database='dmic',
             user=uname_,
@@ -127,18 +128,20 @@ class SpectatorTesting:
     
     # Цикл по клиентам 
     async def connect_clients(self):
-        futures = [self.connect_client(id=id) for id in self.users.keys()]
+        self.session = ClientSession()
+        futures = [self.connect_client(id=id, session=self.session) for id in self.users.keys()]
         await asyncio.gather(*futures)
         logging.info(f'clients done')
 
     async def close_connections(self):
-        cnt = 0
-        for id in self.connections:
-            client = self.connections[id]
-            await client.close()
-            cnt += 1
-            logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
-        print('All connections closed')
+        # cnt = 0
+        # for id in self.connections:
+        #     client = self.connections[id]
+        #     await client.close()
+        #     cnt += 1
+        #     logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
+        # print('All connections closed')
+        self.session.close
     
     def interruption_close_connections(self):
         cnt = 0
