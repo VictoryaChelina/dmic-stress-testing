@@ -1,9 +1,12 @@
+import logging
+from logging import FileHandler
+logging.basicConfig(level=logging.WARNING,handlers=[FileHandler('err_log2.txt')])
+
 import datetime
 from time import perf_counter
 import dmic_stress_testing.random_marker as rm
 from dmic_stress_testing.common import read_config
 from random import randint
-import logging
 import numpy as np
 import csv
 
@@ -12,7 +15,7 @@ from aiochclient import ChClient
 from aiohttp import ClientSession
  
 
-logging.basicConfig(level=logging.WARNING)
+
         
 
 # Класс отправки псевдологов
@@ -80,7 +83,7 @@ class SpectatorTesting:
         rps = self.total_user_push / time_from_start
         self.rows_per_second.append(rps)
         logging.info(f'rps {rps}')
-        print(f'rps: {rps}', end='\r')
+        # print(f'rps: {rps}', end='\r')
         writer = csv.writer(self.f, delimiter=',', quotechar='|')
         writer.writerow([time_from_start, self.total_user_push, rps])
 
@@ -95,19 +98,13 @@ class SpectatorTesting:
                 await asyncio.sleep(0)
 
     async def loops(self):
-        for _ in range(self.configuration['INTERVAL'][1]):
+        for _ in range(self.configuration['AMOUNT']):
             await self.insert_rows_many_users()
 
     async def interval(self):
         start_interval = datetime.datetime.today()
-        mesurment = self.configuration['INTERVAL'][1]
-        amount = int(self.configuration['INTERVAL'][0])
-        if mesurment == 's':
-            delta = datetime.timedelta(seconds=amount)
-        elif mesurment == 'm':
-            delta = datetime.timedelta(minutes=amount)
-        else:
-            delta = datetime.timedelta(hours=amount)
+        amount = int(self.configuration['AMOUNT'])
+        delta = datetime.timedelta(seconds=amount)
         while (datetime.datetime.today() - start_interval < delta):
             await self.insert_rows_many_users()
 
@@ -125,6 +122,7 @@ class SpectatorTesting:
             user=uname_,
             password=pass_)
         self.connections[id] = client
+        await client.is_alive()
         logging.info(f'client with id {id} connected')
     
     # Цикл по клиентам 
@@ -140,6 +138,7 @@ class SpectatorTesting:
             await client.close()
             cnt += 1
             logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
+        print('All connections closed')
     
     def interruption_close_connections(self):
         cnt = 0
@@ -150,8 +149,7 @@ class SpectatorTesting:
             logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
 
     def metrics(self):
-        rps = np.array(self.rows_per_second)
-        average_rps = np.average(rps)
+        average_rps = self.total_user_push / (self.stop_connection_time - self.start_connection_time)
 
         padding = 40
         print('МЕТРИКИ:\n')
@@ -175,7 +173,7 @@ class SpectatorTesting:
         self.stop_connection_time = perf_counter()
 
         self.start_insertion_time = perf_counter()
-        if self.configuration['INTERVAL'][0] == 'loops':
+        if self.configuration['INTERVAL'] == 'loops':
             logging.warning(f'start loops')
             await self.loops()
         else:

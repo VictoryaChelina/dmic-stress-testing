@@ -69,6 +69,11 @@ def parser():
         type=str, 
         help='add time for test or "timeless" if you want timeless test'
     )
+    parser.add_argument(
+        '--log',
+        type=str, 
+        help='add log file name'
+    )
     args = parser.parse_args()
     return args
 
@@ -107,6 +112,8 @@ def read_config():
         result_config["MODE"] = conf.mode
     if conf.interval != None:
         result_config["INTERVAL"] = conf.interval
+    if conf.log != None:
+        result_config["LOG"] = conf.log
     return result_config
 
 if __name__ == '__main__':

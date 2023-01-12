@@ -154,7 +154,6 @@ class SpectatorTesting:
 
     def insertion(self, id, rows):
         self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
-
         self.last_insertion_time = perf_counter()
         self.total_user_push += self.configuration['ROWS_NUM']
         self.user_rows_count[id] += self.configuration['ROWS_NUM']
@@ -179,20 +178,14 @@ class SpectatorTesting:
 
     # Запускает цикл по connections для отправки логов
     def loops(self):
-        for _ in range(self.configuration['INTERVAL'][1]):
+        for _ in range(self.configuration['AMOUNT']):
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
 
     def interval(self):
         start_interval = datetime.datetime.today()
-        mesurment = self.configuration['INTERVAL'][1]
-        amount = int(self.configuration['INTERVAL'][0])
-        if mesurment == 's':
-            delta = datetime.timedelta(seconds=amount)
-        elif mesurment == 'm':
-            delta = datetime.timedelta(minutes=amount)
-        else:
-            delta = datetime.timedelta(hours=amount)
+        amount = self.configuration['AMOUNT']
+        delta = datetime.timedelta(seconds=amount)
         while (datetime.datetime.today() - start_interval < delta):
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
@@ -226,9 +219,9 @@ class SpectatorTesting:
         logging.warning(f'Connected users {len(self.users)} in {end_connect-end_gen} seconds')
         self.start_insertion_time = perf_counter()
         try:
-            if self.configuration['INTERVAL'][0] == 'loops':
+            if self.configuration['INTERVAL'] == 'loops':
                 logging.debug(f'start loops')
-                self.loops()  # В бесконечном цикле пушатся строки от пользователей
+                self.loops()  
             else:
                 logging.debug(f'start interval')
                 self.interval()
