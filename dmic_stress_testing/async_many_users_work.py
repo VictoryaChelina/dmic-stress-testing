@@ -29,6 +29,7 @@ class SpectatorTesting:
     rows_const_part = {}  # Словарь id: ScreenmarkFact подготовленная строка для пушинга (неизменяемая часть)
     last_push_time = {}  # Словарь id: время последней отправки с пользователя
     user_rows_count = {}  # Словарь id: всего строк отправлено от пользователя
+    tasks = []
     session = None
 
     # Сбор метрик
@@ -90,18 +91,17 @@ class SpectatorTesting:
         writer.writerow([time_from_start, self.total_user_push, rps])
 
     async def insert_rows_many_users(self):
-        tasks = []
         for id in self.connections:
             if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["LIMIT"] and \
             datetime.datetime.today() - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
                 logging.debug(f'{id} insert rows')
                 task = asyncio.create_task(self.insert_rows_one_user(id))
-                tasks.append(task)
+                self.tasks.append(task)
                 self.last_push_time[id] = datetime.datetime.today()
             else:
                 await asyncio.sleep(0)
             try:
-                await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                await asyncio.wait(self.tasks, return_when=asyncio.FIRST_COMPLETED)
             except asyncio.exceptions.CancelledError:
                 print("KB interrupt inside insert_rows_many_users")
 
@@ -158,7 +158,7 @@ class SpectatorTesting:
             logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
 
     def metrics(self):
-        average_rps = self.total_user_push / (self.stop_connection_time - self.start_connection_time)
+        average_rps = self.total_user_push / (self.last_insertion_time - self.start_insertion_time)
 
         padding = 40
         print('МЕТРИКИ:\n')
