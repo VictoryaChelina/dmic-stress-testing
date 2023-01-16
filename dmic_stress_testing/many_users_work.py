@@ -192,7 +192,7 @@ class SpectatorTesting:
                 self.push_update_one_user(id=id)
     
     def metrics(self):
-        average_rps = self.total_user_push / (self.stop_connection_time - self.start_connection_time)
+        average_rps = self.total_user_push / (self.last_insertion_time - self.start_insertion_time)
 
         padding = 40
         print('МЕТРИКИ:\n')
