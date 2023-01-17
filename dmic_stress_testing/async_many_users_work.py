@@ -1,6 +1,6 @@
 import logging
 from logging import FileHandler
-logging.basicConfig(level=logging.WARNING,handlers=[FileHandler('err_log2.txt')])
+logging.basicConfig(level=logging.WARNING,handlers=[FileHandler('err_log4.txt')])
 
 import datetime
 from time import perf_counter
@@ -13,7 +13,7 @@ import csv
 import asyncio
 from aiochclient import ChClient
 from aiohttp import ClientSession
- 
+from aiohttp import TCPConnector 
 
 
         
@@ -79,35 +79,43 @@ class SpectatorTesting:
             row = self.rows_const_part[id]
             rows.append(row)
         await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
+
         self.last_insertion_time = perf_counter()
         self.total_user_push += self.configuration['ROWS_NUM']
         self.user_rows_count[id] += self.configuration['ROWS_NUM']
         time_from_start = self.last_insertion_time - self.start_insertion_time
         rps = self.total_user_push / time_from_start
         self.rows_per_second.append(rps)
-        logging.info(f'rps {rps}')
         print(f'rps: {rps}', end='\r')
         writer = csv.writer(self.f, delimiter=',', quotechar='|')
         writer.writerow([time_from_start, self.total_user_push, rps])
 
     async def insert_rows_many_users(self):
+        push_int = datetime.timedelta(seconds=self.configuration['PUSH_INT'])
         for id in self.connections:
-            if len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["LIMIT"] and \
-            datetime.datetime.today() - self.last_push_time[id] >= datetime.timedelta(seconds=self.configuration['PUSH_INT']):
+            async_condition = len(asyncio.all_tasks(asyncio.get_running_loop())) < self.configuration["LIMIT"] 
+            push_condition = datetime.datetime.today() - self.last_push_time[id] >= push_int
+            if async_condition and push_condition:
                 logging.debug(f'{id} insert rows')
                 task = asyncio.create_task(self.insert_rows_one_user(id))
                 self.tasks.append(task)
                 self.last_push_time[id] = datetime.datetime.today()
             else:
                 await asyncio.sleep(0)
-            try:
-                await asyncio.wait(self.tasks, return_when=asyncio.FIRST_COMPLETED)
-            except asyncio.exceptions.CancelledError:
-                print("KB interrupt inside insert_rows_many_users")
+            # try:
+            #     done, pending = await asyncio.wait(self.tasks, return_when=asyncio.FIRST_EXCEPTION)
+            #     for task in pending:
+            #         task.cancel()
+            #         logging.debug(f'task was canceled')
+            #     return True
+            # except asyncio.exceptions.CancelledError:
+            #     print("KB interrupt inside insert_rows_many_users")
+            #     return False
 
     async def loops(self):
-        for _ in range(self.configuration['AMOUNT']):
-            await self.insert_rows_many_users()
+        amount = range(self.configuration['AMOUNT'])
+        futures = [self.insert_rows_many_users() for _ in amount]
+        await asyncio.gather(*futures)
 
     async def interval(self):
         start_interval = datetime.datetime.today()
@@ -134,20 +142,15 @@ class SpectatorTesting:
     
     # Цикл по клиентам 
     async def connect_clients(self):
-        self.session = ClientSession()
+        self.session = ClientSession(connector=TCPConnector(limit=0))
         futures = [self.connect_client(id=id, session=self.session) for id in self.users.keys()]
         await asyncio.gather(*futures)
         logging.info(f'clients done')
 
     async def close_connections(self):
-        # cnt = 0
-        # for id in self.connections:
-        #     client = self.connections[id]
-        #     await client.close()
-        #     cnt += 1
-        #     logging.debug(f'all connections{len(self.connections)}, closed{cnt}')
-        # print('All connections closed')
-        self.session.close
+        # self.session.close  #  Если закрывать таким образом то получаем ошибки, что подключение не закрыто
+        futures = [self.connections[id].close() for id in self.connections]
+        await asyncio.gather(*futures)
     
     def interruption_close_connections(self):
         cnt = 0
@@ -193,7 +196,8 @@ class SpectatorTesting:
             await asyncio.sleep(0)
 
         print('Closing connections')
-        await self.close_connections()
+        task = asyncio.create_task(self.close_connections())
+        await asyncio.wait([task])
         self.metrics()
 
 

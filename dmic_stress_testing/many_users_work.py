@@ -187,7 +187,7 @@ class SpectatorTesting:
         amount = self.configuration['AMOUNT']
         delta = datetime.timedelta(seconds=amount)
         while (datetime.datetime.today() - start_interval < delta and \
-            threading.active_count() < self.configuration[self.configuration["LIMIT"]]):
+            threading.active_count() < self.configuration["LIMIT"]):
             for id in self.users.keys():
                 self.push_update_one_user(id=id)
     
@@ -197,7 +197,7 @@ class SpectatorTesting:
         padding = 40
         print('МЕТРИКИ:\n')
         
-        print(':', 'LIMIT:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
+        print(':', 'LIMIT:'.ljust(padding), self.configuration['LIMIT'])
         print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print(':', 'Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
         print(':', 'Total number of users:'.ljust(padding), self.configuration['USERS_NUM'] * self.configuration['DEPARTMENT_NUM'])
@@ -213,11 +213,11 @@ class SpectatorTesting:
         self.gen_users()  # Создаются пользователи, подключения и подготавливаются неизменяемые части строк
         end_gen = perf_counter()
         logging.warning(f'Generated users {len(self.users)} in {end_gen-start_gen} seconds')
+
         self.start_connection_time = perf_counter()
         self.connect_users()  # Пользователи подключаются к базе
         self.stop_connection_time = perf_counter()
-        end_connect = perf_counter()
-        logging.warning(f'Connected users {len(self.users)} in {end_connect-end_gen} seconds')
+
         self.start_insertion_time = perf_counter()
         try:
             if self.configuration['INTERVAL'] == 'loops':
@@ -229,8 +229,7 @@ class SpectatorTesting:
         except KeyboardInterrupt:
             print("Interruption")
         finally:
-            end_push = perf_counter()
-            logging.warning(f'pushed rows in {end_push-end_connect} seconds')
+            self.last_insertion_time = perf_counter()
             print()
             while threading.active_count() > 1:
                 continue

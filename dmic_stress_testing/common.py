@@ -70,6 +70,11 @@ def parser():
         help='add time for test or "timeless" if you want timeless test'
     )
     parser.add_argument(
+        '--amount',
+        type=int, 
+        help='add amount of loops or seconds for test'
+    )
+    parser.add_argument(
         '--log',
         type=str, 
         help='add log file name'
@@ -112,6 +117,8 @@ def read_config():
         result_config["MODE"] = conf.mode
     if conf.interval != None:
         result_config["INTERVAL"] = conf.interval
+    if conf.amount != None:
+        result_config["AMOUNT"] = conf.amount
     if conf.log != None:
         result_config["LOG"] = conf.log
     return result_config

@@ -48,8 +48,8 @@ def realtime_counting(connection):
 
 def check():
     connection = process()
-    # realtime_counting(connection)
-    # reading(connection)
+    #realtime_counting(connection)
+    #reading(connection)
     rows = counting(connection)
     print(rows)
 
