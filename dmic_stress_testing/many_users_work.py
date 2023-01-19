@@ -76,7 +76,7 @@ class SpectatorTesting:
     # Генерируется заданное число пользователей
     def gen_users(self):
         for department in range(self.configuration['DEPARTMENT_NUM']):
-            department = randint(1, 65535)
+            department = randint(1, 65355)
             for user in range(self.configuration['USERS_NUM']):
                 user = rm.RandUser(department=department)
                 id = user.user_id()

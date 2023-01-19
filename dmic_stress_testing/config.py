@@ -1,12 +1,12 @@
 configuration = {
     # Адресс Dmic
-    "DB_URL" : "http://10.11.20.98:8123",
+    "DB_URL" : "http://10.11.20.97:8123",
 
     # Промежутки попыток подключения к БД (в секундах)
     "CONNECTION_INTERVAL" : 1,
 
     # Количество генерируемых строк от одного пользователя в минуту
-    "ROWS_NUM" : 2000,
+    "ROWS_NUM" : 1000,
 
     # Количество пользователей в департаменте
     "USERS_NUM" : 1,
@@ -41,10 +41,10 @@ configuration = {
     "MODE" : "async",  
 
     # Возможные значения: loops или interval
-    "INTERVAL" : 'interval', 
+    "INTERVAL" : 'loops', 
 
     # Количество циклов или секунд
-    "AMOUNT" : 10,
+    "AMOUNT" : 1,
 
     #  Имя файла для записи лога
     "LOG" : "some_6.csv"  

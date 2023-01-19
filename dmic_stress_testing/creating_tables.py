@@ -40,7 +40,7 @@ class pc_first_last_seen(ico.Model):
     root_disk_serial = ico.StringField()
     first_seen = ico.DateField()
     last_seen = ico.DateField()
-    engine = ico.ReplacingMergeTree(
+    engine = ico.MergeTree(
         partition_key=['root_disk_serial'],
         order_by=[root_disk_serial],
         index_granularity=8192)
@@ -48,10 +48,10 @@ class pc_first_last_seen(ico.Model):
 
 def creating():
     db = process()
-    # db.create_table(screenmarkfact)
+    db.create_table(screenmarkfact)
     # db.create_table(printmarkfact)
-    db.create_table(pc_activity)
-    db.create_table(pc_first_last_seen)
+    #db.create_table(pc_activity)
+    #db.create_table(pc_first_last_seen)
 
 
 if __name__ == '__main__':

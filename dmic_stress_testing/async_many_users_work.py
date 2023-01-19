@@ -33,6 +33,7 @@ class SpectatorTesting:
     session = None
 
     # Сбор метрик
+    loop_counting = 0
     rows_per_second = []  # Строк в секунду (при каждом добавлении от пользователя)
     total_user_push = 0
     insertion_time = 0
@@ -44,7 +45,7 @@ class SpectatorTesting:
     # Генерируется заданное число пользователей
     def gen_users(self):
         for department in range(self.configuration['DEPARTMENT_NUM']):
-            department = randint(1, 65535)
+            department = randint(1, 65355)
             for user in range(self.configuration['USERS_NUM']):
                 user = rm.RandUser(department=department)
                 id = user.user_id()
@@ -58,9 +59,9 @@ class SpectatorTesting:
                     datetime.datetime.today(),
                     user.user_name, 
                     user.user_domain,
-                    user.marker,
                     user.department,
                     user.disk,
+                    user.marker,
                     user.ip,
                     user.hw]
     
@@ -88,7 +89,7 @@ class SpectatorTesting:
         self.rows_per_second.append(rps)
         print(f'rps: {rps}', end='\r')
         writer = csv.writer(self.f, delimiter=',', quotechar='|')
-        writer.writerow([time_from_start, self.total_user_push, rps])
+        writer.writerow([time_from_start, self.total_user_push, rps, datetime.datetime.today()])
 
     async def insert_rows_many_users(self):
         push_int = datetime.timedelta(seconds=self.configuration['PUSH_INT'])
@@ -121,8 +122,10 @@ class SpectatorTesting:
         start_interval = datetime.datetime.today()
         amount = int(self.configuration['AMOUNT'])
         delta = datetime.timedelta(seconds=amount)
+        self.loop_counting = 0
         while (datetime.datetime.today() - start_interval < delta):
             await self.insert_rows_many_users()
+            self.loop_counting += 1
 
     # Подключение клиента 
     async def connect_client(self, id, session):
@@ -148,7 +151,6 @@ class SpectatorTesting:
         logging.info(f'clients done')
 
     async def close_connections(self):
-        # self.session.close  #  Если закрывать таким образом то получаем ошибки, что подключение не закрыто
         futures = [self.connections[id].close() for id in self.connections]
         await asyncio.gather(*futures)
     
@@ -166,6 +168,8 @@ class SpectatorTesting:
         padding = 40
         print('МЕТРИКИ:\n')
         
+        if self.configuration['INTERVAL'] == 'interval':
+            print(':', 'За было пройдено циклов:'.ljust(padding), self.loop_counting)
         print(':', 'LIMIT:'.ljust(padding), self.configuration['LIMIT'])
         print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])
         print(':', 'Number of users per department:'.ljust(padding), self.configuration['USERS_NUM'])
@@ -205,7 +209,7 @@ async def main(test):
     start_test = perf_counter()
     await test.entr_point()
     stop_test = perf_counter()
-    logging.warning(f'test worked in {stop_test-start_test} seconds')
+    print(f'test worked in {stop_test-start_test} seconds')
     return
 
 

@@ -22,7 +22,7 @@ class RandUser:
         self.disk = ''.join(choices(ch,k=20))
         self.user_name = ''.join(choices(ch,k=randint(1, 100)))
         self.user_domain = ''.join(choices(ch,k=randint(1, 100)))
-        self.marker = generate_marker(str(randint(1, 65535)), self.disk, self.user_name, self.user_domain)
+        self.marker = generate_marker(str(randint(1, 65355)), self.disk, self.user_name, self.user_domain)
     
 
     # Возвращает уникальный id пользователя

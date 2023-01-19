@@ -13,7 +13,7 @@ def connect():
         pass_ = f'yuramarkin'
         connection = ico.Database(
             'dmic',
-            db_url="http://10.11.20.98:8123",
+            db_url="http://10.11.20.97:8123",
             username=uname_,
             password=pass_)
         logging.info(f'{uname_} {pass_}: Подключился базе')
@@ -26,7 +26,9 @@ def connect():
 
 def process():
     connected = False
-    while not connected:
+    c = 0
+    while not connected and c < 3:
+        c += 1
         connected, connection = connect()
         if not connected:
             time.sleep(1)
@@ -46,13 +48,16 @@ def realtime_counting(connection):
     while True:
         print(f'rows in base: {connection.count(ScreenmarkFact)}', end='\r')
 
+def drop(connection):
+    from infi.clickhouse_orm import migrations
+    migrations.DropTable(ScreenmarkFact)
+
 def check():
     connection = process()
     #realtime_counting(connection)
     #reading(connection)
     rows = counting(connection)
     print(rows)
-
 
 if __name__ == '__main__':
     check()
