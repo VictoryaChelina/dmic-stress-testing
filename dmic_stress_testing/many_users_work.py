@@ -4,16 +4,12 @@ from time import perf_counter
 import dmic_stress_testing.random_marker as rm
 from dmic_stress_testing.common import read_config
 import infi.clickhouse_orm as ico
-from random import randint, random
-from enum import Enum
-import traceback
+from random import randint
 import logging
 import threading
 import concurrent.futures
-import numpy as np
-import argparse
-import json 
 import csv
+import traceback
 
 
 THREAD = True
@@ -110,12 +106,17 @@ class SpectatorTesting:
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
                 password=pass_)
+
+            self.db.add_setting("async_insert", 1)
+            self.db.add_setting("async_insert_max_data_size", 100000)
+            self.db.add_setting("async_insert_busy_timeout_ms", 3000)
+
             self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
         except Exception as ex_:
             logging.info(f'{id} {uname_} {pass_}: Подключение...')
-            #traceback.print_exc()
+            traceback.print_exc()
         return False
 
     def process(self, id):
