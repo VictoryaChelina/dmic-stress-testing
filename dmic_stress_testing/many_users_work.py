@@ -106,10 +106,19 @@ class SpectatorTesting:
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
                 password=pass_)
-
-            self.db.add_setting("async_insert", 1)
-            self.db.add_setting("async_insert_max_data_size", 100000)
-            self.db.add_setting("async_insert_busy_timeout_ms", 3000)
+            
+            # self.db.add_setting("async_insert", 1)
+            # self.db.add_setting("async_insert_max_data_size", 100000)
+            # self.db.add_setting("async_insert_busy_timeout_ms", 3000)
+            
+            if self.configuration['ASYNC_INSERT']['ON']:
+                self.db.add_setting("async_insert", 1)
+                self.db.add_setting(
+                    "async_insert_max_data_size",
+                    self.configuration['ASYNC_INSERT']['MAX_DATA_SIZE'])
+                self.db.add_setting(
+                    "async_insert_busy_timeout_ms",
+                    self.configuration['ASYNC_INSERT']['BUSY_TIMEOUT'])
 
             self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')

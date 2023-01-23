@@ -67,7 +67,7 @@ def parser():
     parser.add_argument(
         '--interval',
         type=str, 
-        help='add time for test or "timeless" if you want timeless test'
+        help='add "interval" for time interval or "loops"'
     )
     parser.add_argument(
         '--amount',
@@ -78,6 +78,21 @@ def parser():
         '--log',
         type=str, 
         help='add log file name'
+    )
+    parser.add_argument(
+        '--async_insert',
+        action=argparse.BooleanOptionalAction,
+        help='set this flag if async insert to ClickHouse needed'
+    )
+    parser.add_argument(
+        '--insert_max_data_size',
+        type=int,
+        help='add maximum amount of rows per async insertion (if --async_insert set)'
+    )
+    parser.add_argument(
+        '--insert_busy_timeout',
+        type=int,
+        help='add timeout for async insertion in ms (if --async_insert set)'
     )
     args = parser.parse_args()
     return args
@@ -121,6 +136,14 @@ def read_config():
         result_config["AMOUNT"] = conf.amount
     if conf.log != None:
         result_config["LOG"] = conf.log
+    
+    if conf.async_insert != None:
+        result_config["ASYNC_INSERT"]["ON"] = conf.async_insert
+        if conf.insert_max_data_size != None:
+            result_config["ASYNC_INSERT"]["MAX_DATA_SIZE"] = conf.insert_max_data_size
+        if conf.insert_busy_timeout != None:
+            result_config["ASYNC_INSERT"]["BUSY_TIMEOUT"] = conf.insert_busy_timeout
+
     return result_config
 
 if __name__ == '__main__':
