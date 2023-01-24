@@ -6,6 +6,7 @@ from dmic_stress_testing.common import read_config
 import infi.clickhouse_orm as ico
 from random import randint
 import logging
+from logging import FileHandler
 import threading
 import concurrent.futures
 import csv
@@ -15,7 +16,7 @@ import traceback
 THREAD = True
 POOL = True
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING, handlers=[FileHandler('err_log5.txt')])
 
 
 # Модель таблиц
@@ -107,12 +108,10 @@ class SpectatorTesting:
                 username=uname_,
                 password=pass_)
             
-            # self.db.add_setting("async_insert", 1)
-            # self.db.add_setting("async_insert_max_data_size", 100000)
-            # self.db.add_setting("async_insert_busy_timeout_ms", 3000)
-            
             if self.configuration['ASYNC_INSERT']['ON']:
-                self.db.add_setting("async_insert", 1)
+                self.db.add_setting(
+                    "async_insert", 
+                    1)
                 self.db.add_setting(
                     "async_insert_max_data_size",
                     self.configuration['ASYNC_INSERT']['MAX_DATA_SIZE'])
@@ -125,7 +124,6 @@ class SpectatorTesting:
             return True
         except Exception as ex_:
             logging.info(f'{id} {uname_} {pass_}: Подключение...')
-            traceback.print_exc()
         return False
 
     def process(self, id):
@@ -163,17 +161,19 @@ class SpectatorTesting:
         return rows
 
     def insertion(self, id, rows):
-        self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
-        self.last_insertion_time = perf_counter()
-        self.total_user_push += self.configuration['ROWS_NUM']
-        self.user_rows_count[id] += self.configuration['ROWS_NUM']
-        time_from_start = self.last_insertion_time - self.start_insertion_time
-        rps = self.total_user_push / time_from_start
-        self.rows_per_second.append(rps)
-
-        print(f'rps: {rps}', end='\r')
-        writer = csv.writer(self.f, delimiter=',', quotechar='|')
-        writer.writerow([time_from_start, self.total_user_push, rps])
+        try:
+            self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
+            self.last_insertion_time = perf_counter()
+            self.total_user_push += self.configuration['ROWS_NUM']
+            self.user_rows_count[id] += self.configuration['ROWS_NUM']
+            time_from_start = self.last_insertion_time - self.start_insertion_time
+            rps = self.total_user_push / time_from_start
+            self.rows_per_second.append(rps)
+            print(f'rps: {rps}', end='\r')
+            writer = csv.writer(self.f, delimiter=',', quotechar='|')
+            writer.writerow([time_from_start, self.total_user_push, rps])
+        except Exception as ex:
+            logging.warning(ex)
     
     def push_update_one_user(self, id):
         report_time = datetime.datetime.today()  # Время отправки строк лога с клиента на dmic
@@ -181,7 +181,7 @@ class SpectatorTesting:
             rows = self.gen_rows(id = id, report_time=report_time)
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
             if THREAD:
-                threading.Thread(target=self.insertion, args=(id, rows)).start()
+                threading.Thread(target=self.insertion, args=(id, rows), daemon=True).start()
             else:
                 self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
