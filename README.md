@@ -8,13 +8,20 @@ Simple tool to provide stress test on dmic server.
 
 ## Installation
 1) Install [dm-marker-generator](https://gitlab.ispras.ru/watermarking/dm-marker-generator)
+```
+pip install https://gitlab.ispras.ru/watermarking/dm-marker-generator
+```
 2) Install this package with 
 ```
 pip install git+https://gitlab.ispras.ru/watermarking/dmic-stress-testing.git
 ```
 ## Usage
-Дополню потом.
+ 1) В директории dmic_stress_testing лежит файл config.py, в котором можно задать параметры конфигурации
+ 2) После установки параметров конфигурации необходимо запустить один из скриптов many_users_work (thread) или async_many_users_work, например, через run в VSCode
+ 3) Тест начнет работу и в терминале появится значение текущего rps (row per second)
+ 4) После окончания теста в терминале появятся метрики, соответсвующие запуску
 
+## Project status
 Задача перегрузить сервер и сделать это правдоподобно.
 
 Строка на пользователе формируется каждые 10 секунд.
@@ -23,7 +30,7 @@ pip install git+https://gitlab.ispras.ru/watermarking/dmic-stress-testing.git
 100 строк копятся 1000 секунд. 
 
 
-МАКСИМАЛЬНАЯ ЗГРУЗКА - НАИХУДШИЙ СЦЕНАРИЙ
+МАКСИМАЛЬНАЯ ЗАГРУЗКА - НАИХУДШИЙ СЦЕНАРИЙ
 В любом случае, максимальная нагрузка от одного пользователя 100 строк в минуту.
 
 Нужно дойти до 1 млн пользователей.
@@ -37,7 +44,4 @@ pip install git+https://gitlab.ispras.ru/watermarking/dmic-stress-testing.git
 У 1 млн пользователей постоянно отсылаются логи. Значит по 6 строчек от каждого в минуту.
 Получается 6 млн строк в минуту от всех.
 А в реальности даже лучше, т.к. нет каких-то общих часов,
-по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов. 
-
-## Project status
-In progress...
+по которым спектраторы на всех пользователях одновременно бы отправили свои 6 строк из логов.
