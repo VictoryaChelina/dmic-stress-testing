@@ -79,7 +79,7 @@ class SpectatorTesting:
             self.rows_const_part[id][1] = mark_time
             row = self.rows_const_part[id]
             rows.append(row)
-        await client.execute("INSERT INTO screenmarkfact (*) VALUES", *rows)
+        await client.execute("INSERT INTO screenmarkfact VALUES", *rows)
 
         self.last_insertion_time = perf_counter()
         self.total_user_push += self.configuration['ROWS_NUM']

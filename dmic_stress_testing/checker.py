@@ -13,7 +13,7 @@ def connect():
         pass_ = f'yuramarkin'
         connection = ico.Database(
             'dmic',
-            db_url="http://10.11.20.97:8123",
+            db_url="http://10.11.20.97:8129",
             username=uname_,
             password=pass_)
         logging.info(f'{uname_} {pass_}: Подключился базе')

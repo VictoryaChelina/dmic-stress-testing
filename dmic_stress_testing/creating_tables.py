@@ -49,9 +49,9 @@ class pc_first_last_seen(ico.Model):
 def creating():
     db = process()
     db.create_table(screenmarkfact)
-    # db.create_table(printmarkfact)
-    #db.create_table(pc_activity)
-    #db.create_table(pc_first_last_seen)
+    db.create_table(printmarkfact)
+    db.create_table(pc_activity)
+    db.create_table(pc_first_last_seen)
 
 
 if __name__ == '__main__':

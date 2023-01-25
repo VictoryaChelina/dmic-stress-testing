@@ -6,7 +6,7 @@ configuration = {
     "CONNECTION_INTERVAL" : 1,
 
     # Количество генерируемых строк от одного пользователя в минуту
-    "ROWS_NUM" : 10,
+    "ROWS_NUM" : 1000,
 
     # Количество пользователей в департаменте
     "USERS_NUM" : 1,
@@ -18,11 +18,11 @@ configuration = {
     # Следовательно, всего пользователей будет DEPARTMENT_NUM * USERS_NUM
 
     # Количество департаментов
-    "DEPARTMENT_NUM": 1000,
+    "DEPARTMENT_NUM": 35000,
 
     # Количество строк отправляемых за одну загрузку с одного пользователя (в оригинале 100)
     # Используется только в many_users_work
-    "BATCH_SIZE" : 100,
+    "BATCH_SIZE" : 1000,
 
     # Время между отправкой update от пользователя в базу (в секундах)
     "PUSH_INT" : 0,
@@ -38,7 +38,7 @@ configuration = {
     "LIMIT" : 100,
 
     # Возможные значение: async, thread
-    "MODE" : "async",  
+    "MODE" : "thread",  
 
     # Возможные значения: loops или interval
     "INTERVAL" : 'loops', 
@@ -52,8 +52,8 @@ configuration = {
     # Включает асинхронную вставку в dmic
     "ASYNC_INSERT" : {
         "ON" : True, 
-        "MAX_DATA_SIZE" : 100000,
-        "BUSY_TIMEOUT" : 3000
+        "MAX_DATA_SIZE" : 100000,  #  в байтах
+        "BUSY_TIMEOUT" : 1000
         } 
 }
 

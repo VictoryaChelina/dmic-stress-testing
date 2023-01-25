@@ -209,6 +209,7 @@ class SpectatorTesting:
 
         padding = 40
         print('МЕТРИКИ:\n')
+        print(self.configuration)
         
         print(':', 'LIMIT:'.ljust(padding), self.configuration['LIMIT'])
         print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])

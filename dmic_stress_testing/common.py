@@ -103,11 +103,17 @@ def read_config():
     sys.path.insert(0, conf.config)
     from dmic_stress_testing.config import configuration
     result_config = configuration
+
     if conf.config != None:
         with open(conf.config) as file:
             alter_conf = json.load(file)
-            for property in alter_conf.keys():
-                result_config[property] = alter_conf[property]
+            for property, value in alter_conf.items():
+                if type(value) == dict:
+                    for prop in value.keys():
+                        result_config[property][prop] = value[prop]
+                else:
+                    result_config[property] = alter_conf[property]
+
     if conf.db != None:
         result_config["DB_URL"] = conf.db
     if conf.conn_int != None:
@@ -146,7 +152,8 @@ def read_config():
 
     return result_config
 
-if __name__ == '__main__':
+
+def main():
     configuration = read_config()
     if configuration["MODE"] == "async":
         from dmic_stress_testing.async_many_users_work import main, SpectatorTesting
@@ -160,3 +167,7 @@ if __name__ == '__main__':
     else:
         from dmic_stress_testing.many_users_work import main_main
         main_main(configuration)
+
+
+if __name__ == '__main__':
+    main()
