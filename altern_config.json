@@ -1,4 +1,34 @@
 {
-    "DB_URL" : "http://10.11.20.98:8123",
-    "CONNECTION_INTERVAL" : 3
+    "DB_URL" : "http://10.11.20.97:8129",
+
+    "CONNECTION_INTERVAL" : 1,
+
+    "ROWS_NUM" : 1,
+
+    "USERS_NUM" : 1,
+
+    "DEPARTMENT_NUM": 3,
+
+    "BATCH_SIZE" : 1000,
+
+    "PUSH_INT" : 0,
+
+    "MARK_INTERVAL" : 10,
+
+    "MAX_CONNECTION_ATTEMPTS" : 10,
+
+    "LIMIT" : 100,
+
+    "MODE" : "async",  
+
+    "INTERVAL" : "loops", 
+
+    "AMOUNT" : 1,
+
+    "LOG" : "some_6.csv",
+
+    "ASYNC_INSERT" : {
+        "MAX_DATA_SIZE" : 100000,  
+        "BUSY_TIMEOUT" : 1000
+        } 
 }
