@@ -190,15 +190,18 @@ class SpectatorTesting:
     def loops(self):
         for _ in range(self.configuration['AMOUNT']):
             for id in self.users.keys():
+                while threading.active_count() > self.configuration["LIMIT"]:
+                    continue
                 self.push_update_one_user(id=id)
 
     def interval(self):
         start_interval = datetime.datetime.today()
         amount = self.configuration['AMOUNT']
         delta = datetime.timedelta(seconds=amount)
-        while (datetime.datetime.today() - start_interval < delta and \
-            threading.active_count() < self.configuration["LIMIT"]):
+        while datetime.datetime.today() - start_interval < delta:
             for id in self.users.keys():
+                while threading.active_count() > self.configuration["LIMIT"]:
+                    continue
                 self.push_update_one_user(id=id)
     
     def metrics(self):
