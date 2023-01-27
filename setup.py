@@ -13,11 +13,14 @@ setup(
 
     install_requires=[
         'infi.clickhouse-orm',
-        'numpy'
+        'numpy',
+        'aiochclient',
+        'aiohttp'
+
     ],
     entry_points={
          'console_scripts': [
-            'make-stress = dmic_stress_testing.many_users_work:main'
+            'make-stress = dmic_stress_testing.common:main'
         ]
     }
 )
