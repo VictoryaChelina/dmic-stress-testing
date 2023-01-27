@@ -82,7 +82,6 @@ def parser():
     parser.add_argument(
         '--async_insert',
         type=bool,
-        default=True,
         help='set this flag if async insert to ClickHouse needed'
     )
     parser.add_argument(
@@ -101,7 +100,6 @@ def parser():
 
 def read_config():
     conf = parser()
-    sys.path.insert(0, conf.config)
     from dmic_stress_testing.config import configuration
     result_config = configuration
 
@@ -144,11 +142,11 @@ def read_config():
     if conf.log != None:
         result_config["LOG"] = conf.log
     
-    if conf.async_insert:
+    if conf.async_insert != None:
         result_config["ASYNC_INSERT"]["ON"] = conf.async_insert
-        if conf.insert_max_data_size != None:
-            result_config["ASYNC_INSERT"]["MAX_DATA_SIZE"] = conf.insert_max_data_size
-        if conf.insert_busy_timeout != None:
-            result_config["ASYNC_INSERT"]["BUSY_TIMEOUT"] = conf.insert_busy_timeout
+    if conf.insert_max_data_size != None:
+        result_config["ASYNC_INSERT"]["MAX_DATA_SIZE"] = conf.insert_max_data_size
+    if conf.insert_busy_timeout != None:
+        result_config["ASYNC_INSERT"]["BUSY_TIMEOUT"] = conf.insert_busy_timeout
 
     return result_config
