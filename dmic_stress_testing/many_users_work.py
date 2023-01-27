@@ -2,7 +2,7 @@ import datetime
 import time
 from time import perf_counter
 import dmic_stress_testing.random_marker as rm
-from dmic_stress_testing.common import read_config
+from dmic_stress_testing.script_parser import read_config
 import infi.clickhouse_orm as ico
 from random import randint
 import logging
@@ -16,7 +16,7 @@ import traceback
 THREAD = True
 POOL = True
 
-logging.basicConfig(level=logging.WARNING, handlers=[FileHandler('err_log5.txt')])
+logging.basicConfig(level=logging.WARNING, handlers=[FileHandler('err_log6.txt')])
 
 
 # Модель таблиц
@@ -209,7 +209,6 @@ class SpectatorTesting:
 
         padding = 40
         print('МЕТРИКИ:\n')
-        print(self.configuration)
         
         print(':', 'LIMIT:'.ljust(padding), self.configuration['LIMIT'])
         print(':', 'Number of departments:'.ljust(padding), self.configuration['DEPARTMENT_NUM'])

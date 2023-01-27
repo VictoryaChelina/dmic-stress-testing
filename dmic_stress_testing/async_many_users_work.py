@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.WARNING,handlers=[FileHandler('err_log4.txt')]
 import datetime
 from time import perf_counter
 import dmic_stress_testing.random_marker as rm
-from dmic_stress_testing.common import read_config
+from dmic_stress_testing.script_parser import read_config
 from random import randint
 import numpy as np
 import csv
