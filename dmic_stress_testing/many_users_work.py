@@ -11,6 +11,7 @@ import threading
 import concurrent.futures
 import csv
 import traceback
+from tqdm import tqdm
 
 
 THREAD = True
@@ -53,6 +54,7 @@ class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
         self.f = open('./' + self.configuration['LOG'], 'w', newline='')
+
     connections = {}  # Словарь id: ico.Database (экземпляры подключения)
     not_connected_users = []  # Список пользователей, которые не смогли подключиться к базе за максимальное число попыток
     users = {}  # Словарь id: rm.RandUser 
@@ -68,7 +70,6 @@ class SpectatorTesting:
     stop_connection_time = None
     start_insertion_time = None
     last_insertion_time = None
-
 
     # Генерируется заданное число пользователей
     def gen_users(self):
@@ -93,6 +94,7 @@ class SpectatorTesting:
                     root_disk_serial=user.disk, \
                     ipv4_address=user.ip, \
                     hw_address=user.hw)
+        self.pbar = tqdm(total = len(self.users), desc='Connecting users')
 
     # Подключение к базе
     def connect(self, id):
@@ -136,6 +138,7 @@ class SpectatorTesting:
                 time.sleep(self.configuration['CONNECTION_INTERVAL'])
         if self.connected == False:
             self.not_connected_users.append(id)
+        self.pbar.update(1)
 
     # Пользователи подключаются к базе
     def connect_users(self):
@@ -230,7 +233,10 @@ class SpectatorTesting:
         self.start_connection_time = perf_counter()
         self.connect_users()  # Пользователи подключаются к базе
         self.stop_connection_time = perf_counter()
-
+        while threading.active_count() > 2:
+                continue
+        self.pbar.close()
+        
         self.start_insertion_time = perf_counter()
         try:
             if self.configuration['INTERVAL'] == 'loops':
@@ -243,8 +249,7 @@ class SpectatorTesting:
             print("Interruption")
         finally:
             self.last_insertion_time = perf_counter()
-            print()
-            while threading.active_count() > 1:
+            while threading.active_count() > 2:
                 continue
             self.metrics()
 
