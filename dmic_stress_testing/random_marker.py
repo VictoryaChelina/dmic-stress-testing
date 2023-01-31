@@ -17,8 +17,7 @@ class RandUser:
     def __init__(self, department):
         ch = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         self.department = str(department)
-        self.ip = f'{randint(0, 255)}.{randint(0, 255)}.\
-            {randint(0, 255)}.{randint(0, 255)}'
+        self.ip = f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
         self.hw = ''.join(choices(ch, k=12))
         self.disk = ''.join(choices(ch, k=20))
         self.user_name = ''.join(choices(ch, k=randint(1, 100)))
