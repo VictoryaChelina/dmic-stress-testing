@@ -85,6 +85,8 @@ class SpectatorTesting:
     start_insertion_time = None
     last_insertion_time = None
 
+    stop_threading = False
+
     # Генерируется заданное число пользователей
     def gen_users(self):
         for department in range(self.configuration['DEPARTMENT_NUM']):
@@ -202,7 +204,9 @@ class SpectatorTesting:
             writer.writerow([time_from_start, self.total_user_push, rps])
             self.pbar.update(1)
         except Exception as ex:
-            logging.warning(ex)
+            logging.warning(
+                f'Exeption "{ex}" accured while pushing rows')
+            self.stop_threading = True
 
     def push_update_one_user(self, id):
         # Время отправки строк лога с клиента на dmic
@@ -227,6 +231,8 @@ class SpectatorTesting:
             desc='Inserting rows')
         for _ in range(self.configuration['AMOUNT']):
             for id in self.users.keys():
+                if self.stop_threading:
+                    return
                 while threading.active_count() > self.configuration["LIMIT"]:
                     continue
                 self.push_update_one_user(id=id)
