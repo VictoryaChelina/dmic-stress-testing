@@ -156,7 +156,8 @@ class SpectatorTesting:
                 time.sleep(self.configuration['CONNECTION_INTERVAL'])
         if not self.connected:
             self.not_connected_users.append(id)
-        self.pbar.update(1)
+        else:
+            self.pbar.update(1)
 
     # Пользователи подключаются к базе
     def connect_users(self):
@@ -241,36 +242,34 @@ class SpectatorTesting:
                 self.push_update_one_user(id=id)
 
     def metrics(self):
-        average_rps = self.total_user_push
-        / (self.last_insertion_time - self.start_insertion_time)
+        average_rps = self.total_user_push /\
+            (self.last_insertion_time - self.start_insertion_time)
 
         padding = 40
         print('МЕТРИКИ:\n')
-        print(':', 'LIMIT:'.ljust(padding), self.configuration['LIMIT'])
         print(
-            ':',
+            'LIMIT:'.ljust(padding),
+            self.configuration['LIMIT'])
+        print(
             'Number of departments:'.ljust(padding),
             self.configuration['DEPARTMENT_NUM'])
         print(
-            ':',
             'Number of users per department:'.ljust(padding),
             self.configuration['USERS_NUM'])
         print(
-            ':',
             'Total number of users:'.ljust(padding),
             self.configuration['USERS_NUM']
             * self.configuration['DEPARTMENT_NUM'])
         print(
-            ':',
             'Total number of rows:'.ljust(padding),
             self.total_user_push, '\n')
         print(
-            ':',
             'Время на подключение:'.ljust(padding),
             self.stop_connection_time - self.start_connection_time, '\n')
-        print(':', 'Средний rps:'.ljust(padding), average_rps, '\n')
         print(
-            ':',
+            'Средний rps:'.ljust(padding),
+            average_rps, '\n')
+        print(
             'Время окончания теста:'.ljust(padding),
             datetime.datetime.today(), '\n')
 
@@ -278,9 +277,8 @@ class SpectatorTesting:
         start_gen = perf_counter()
         self.gen_users()
         end_gen = perf_counter()
-        logging.warning(
-            f'Generated users {len(self.users)}
-            in {end_gen-start_gen} seconds')
+        logging.warning(f'Generated users {len(self.users)} in \
+            {end_gen-start_gen} seconds')
 
         self.start_connection_time = perf_counter()
         self.connect_users()  # Пользователи подключаются к базе
