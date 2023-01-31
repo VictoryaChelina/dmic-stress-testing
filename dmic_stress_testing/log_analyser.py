@@ -16,6 +16,7 @@ def read_log():
             rps.append(float(row[2]))
     return np.array(time), np.array(rows), np.array(rps)
 
+
 def draw_graph(x, y):
     fig, ax = plt.subplots()
     ax.plot(x, y)
@@ -23,9 +24,11 @@ def draw_graph(x, y):
     ax.set_ylabel('Rows')
     plt.show()
 
+
 def main():
     time, rows, rps = read_log()
     draw_graph(time, rows)
+
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,8 @@
 import asyncio
 from dmic_stress_testing.script_parser import read_config
-from dmic_stress_testing.async_many_users_work import main as async_main, SpectatorTesting
+from dmic_stress_testing.async_many_users_work import\
+    main as async_main,\
+    SpectatorTesting
 from dmic_stress_testing.many_users_work import main_main as thread_main
 
 
@@ -14,7 +16,7 @@ def main():
         except KeyboardInterrupt:
             print('KB interrupt')
             test.interruption_close_connections()
-            test.metrics()    
+            test.metrics()
     else:
         thread_main(configuration)
 
