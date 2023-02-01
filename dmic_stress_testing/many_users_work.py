@@ -18,8 +18,8 @@ THREAD = True
 POOL = True
 
 logging.basicConfig(
-    level=logging.WARNING,
-    handlers=[FileHandler('err_log6.txt')])
+    level=logging.WARNING) #,
+    #handlers=[FileHandler('err_log6.txt')])
 
 
 # Модель таблиц
@@ -142,8 +142,8 @@ class SpectatorTesting:
             self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
-        except Exception as ex_:
-            logging.info(f'{id} {uname_} {pass_}: Подключение...')
+        except Exception as ex:
+            logging.warning(f'Exeption "{ex} while connectiong {uname_} {pass_}')
         return False
 
     def process(self, id):
@@ -308,6 +308,7 @@ class SpectatorTesting:
             while threading.active_count() > 2:
                 continue
             self.pbar.close()
+            self.f.close()
             self.metrics()
 
 
