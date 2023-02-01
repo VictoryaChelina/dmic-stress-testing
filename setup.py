@@ -15,7 +15,9 @@ setup(
         'infi.clickhouse-orm',
         'numpy',
         'aiochclient',
-        'aiohttp'
+        'aiohttp',
+        'progress',
+        'tqdm'
 
     ],
     entry_points={
