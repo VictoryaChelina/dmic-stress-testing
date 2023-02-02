@@ -16,7 +16,6 @@ setup(
         'numpy',
         'aiochclient',
         'aiohttp',
-        'progress',
         'tqdm'
 
     ],
