@@ -18,8 +18,8 @@ THREAD = True
 POOL = True
 
 logging.basicConfig(
-    level=logging.WARNING) #,
-    #handlers=[FileHandler('err_log6.txt')])
+    level=logging.WARNING,
+    handlers=[FileHandler('err_log6.txt')])
 
 
 # Модель таблиц
@@ -238,11 +238,16 @@ class SpectatorTesting:
                 self.push_update_one_user(id=id)
 
     def interval(self):
+        self.pbar = tqdm(
+            total=len(self.users) * self.configuration['AMOUNT'],
+            desc='Inserting rows')
         start_interval = datetime.datetime.today()
         amount = self.configuration['AMOUNT']
         delta = datetime.timedelta(seconds=amount)
         while datetime.datetime.today() - start_interval < delta:
             for id in self.users.keys():
+                if self.stop_threading:
+                    return
                 while threading.active_count() > self.configuration["LIMIT"]:
                     continue
                 self.push_update_one_user(id=id)
