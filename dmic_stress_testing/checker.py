@@ -1,4 +1,5 @@
 from dmic_stress_testing.many_users_work import ScreenmarkFact
+from dmic_stress_testing.common import read_config
 import logging
 import infi.clickhouse_orm as ico
 import time
@@ -11,12 +12,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def connect():
+    configuration = read_config()
     try:
         uname_ = f'admin'
         pass_ = f'yuramarkin'
         connection = ico.Database(
             'dmic',
-            db_url="http://10.11.20.97:8129",
+            db_url=configuration['DB_URL'],
             username=uname_,
             password=pass_)
         logging.info(f'{uname_} {pass_}: Подключился базе')
