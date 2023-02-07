@@ -11,6 +11,7 @@ import asyncio
 from aiochclient import ChClient
 from aiohttp import ClientSession
 from aiohttp import TCPConnector
+from tqdm import tqdm
 
 
 logging.basicConfig(
@@ -76,6 +77,7 @@ class SpectatorTesting:
                     user.marker,
                     user.ip,
                     user.hw]
+        self.pbar = tqdm(total=len(self.users), desc='Connecting users')
 
     # Вставка строки
     async def insert_rows_one_user(self, id):
@@ -92,14 +94,14 @@ class SpectatorTesting:
             row = self.rows_const_part[id]
             rows.append(row)
         await client.execute("INSERT INTO screenmarkfact VALUES", *rows)
-
+        self.pbar.update(1)
         self.last_insertion_time = perf_counter()
         self.total_user_push += self.configuration['ROWS_NUM']
         self.user_rows_count[id] += self.configuration['ROWS_NUM']
         time_from_start = self.last_insertion_time - self.start_insertion_time
         rps = self.total_user_push / time_from_start
         self.rows_per_second.append(rps)
-        print(f'rps: {rps}', end='\r')
+        # print(f'rps: {rps}', end='\r')
         writer = csv.writer(self.f, delimiter=',', quotechar='|')
         writer.writerow([
             time_from_start,
@@ -125,11 +127,17 @@ class SpectatorTesting:
                 await asyncio.sleep(0)
 
     async def loops(self):
+        self.pbar = tqdm(
+            total=len(self.users) * self.configuration['AMOUNT'],
+            desc='Inserting rows')
         amount = range(self.configuration['AMOUNT'])
         futures = [self.insert_rows_many_users() for _ in amount]
         await asyncio.gather(*futures)
 
     async def interval(self):
+        self.pbar = tqdm(
+            total=len(self.users) * self.configuration['AMOUNT'],
+            desc='Inserting rows')
         start_interval = datetime.datetime.today()
         amount = int(self.configuration['AMOUNT'])
         delta = datetime.timedelta(seconds=amount)
@@ -151,7 +159,7 @@ class SpectatorTesting:
             user=uname_,
             password=pass_)
         self.connections[id] = client
-        await client.is_alive()
+        self.pbar.update(1)
         logging.info(f'client with id {id} connected')
 
     # Цикл по клиентам
@@ -218,6 +226,7 @@ class SpectatorTesting:
         self.start_connection_time = perf_counter()
         await self.connect_clients()
         self.stop_connection_time = perf_counter()
+        self.pbar.close()
 
         self.start_insertion_time = perf_counter()
         if self.configuration['INTERVAL'] == 'loops':
@@ -233,6 +242,7 @@ class SpectatorTesting:
         print('Closing connections')
         task = asyncio.create_task(self.close_connections())
         await asyncio.wait([task])
+        self.pbar.close()
         self.metrics()
 
 
