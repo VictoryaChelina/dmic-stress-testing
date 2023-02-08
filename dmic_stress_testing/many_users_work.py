@@ -128,17 +128,6 @@ class SpectatorTesting:
                 username=uname_,
                 password=pass_)
 
-            if self.configuration['ASYNC_INSERT']['ON']:
-                self.db.add_setting(
-                    "async_insert",
-                    1)
-                self.db.add_setting(
-                    "async_insert_max_data_size",
-                    self.configuration['ASYNC_INSERT']['MAX_DATA_SIZE'])
-                self.db.add_setting(
-                    "async_insert_busy_timeout_ms",
-                    self.configuration['ASYNC_INSERT']['BUSY_TIMEOUT'])
-
             self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
@@ -285,12 +274,15 @@ class SpectatorTesting:
             datetime.datetime.today(), '\n')
 
     def entr_point(self):
+        if self.configuration['ASYNC_INSERT']['ON']:
+            from dmic_stress_testing.alter_to_async_insert import alter_insert
+            alter_insert(self.configuration)
+            
         start_gen = perf_counter()
         self.gen_users()
         end_gen = perf_counter()
         logging.warning(f'Generated users {len(self.users)} in \
             {end_gen-start_gen} seconds')
-
         self.start_connection_time = perf_counter()
         self.connect_users()  # Пользователи подключаются к базе
         self.stop_connection_time = perf_counter()

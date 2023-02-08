@@ -221,6 +221,10 @@ class SpectatorTesting:
             datetime.datetime.today(), '\n')
 
     async def entr_point(self):
+        if self.configuration['ASYNC_INSERT']['ON']:
+            from dmic_stress_testing.alter_to_async_insert import alter_insert
+            alter_insert(self.configuration)
+            
         self.gen_users()
 
         self.start_connection_time = perf_counter()
