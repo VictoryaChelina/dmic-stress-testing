@@ -10,7 +10,7 @@ def alter_insert(configuration):
         department_num = f'{user:05}'
         max_data = configuration['ASYNC_INSERT']['MAX_DATA_SIZE']
         timeout = configuration['ASYNC_INSERT']['BUSY_TIMEOUT']
-        query = f'ALTER USER department{department_num} SETTINGS async_insert = 0, async_insert_max_data_size = {max_data}, async_insert_busy_timeout_ms = {timeout}'
+        query = f'ALTER USER department{department_num} SETTINGS async_insert = 1, async_insert_max_data_size = {max_data}, async_insert_busy_timeout_ms = {timeout}'
         admin.raw(query)
         pbar.update(1)
     pbar.close()
