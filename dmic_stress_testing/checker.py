@@ -5,23 +5,28 @@ import infi.clickhouse_orm as ico
 import time
 import datetime
 import traceback
-from tqdm import tqdm
 
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-def connect():
+def connect(name):
     configuration = read_config()
     try:
-        uname_ = f'admin'
-        pass_ = f'yuramarkin'
-        connection = ico.Database(
-            'dmic',
-            db_url=configuration['DB_URL'],
-            username=uname_,
-            password=pass_)
-        logging.info(f'{uname_} {pass_}: Подключился базе')
+        uname_ = name
+        if name == 'admin':
+            pass_ = f'yuramarkin'
+            connection = ico.Database(
+                'dmic',
+                db_url=configuration['DB_URL'],
+                username=uname_,
+                password=pass_)
+        else: 
+            connection = ico.Database(
+                'dmic',
+                db_url=configuration['DB_URL'],
+                username=uname_)
+        logging.info(f'{uname_}: Подключился базе')
         return True, connection
     except Exception as ex_:
         logging.info(f'{uname_} {pass_}: Подключение...')
@@ -29,15 +34,14 @@ def connect():
     return False, False
 
 
-def process(pbar):
+def process(name='admin'):
     connected = False
     c = 0
     while not connected and c < 3:
         c += 1
-        connected, connection = connect()
+        connected, connection = connect(name)
         if not connected:
             time.sleep(1)
-    pbar.update(1)
     return connection
 
 
@@ -47,8 +51,8 @@ def reading(connection):
         print(row.report_time)
 
 
-def counting(connection):
-    rows = connection.count(ScreenmarkFact)
+def counting(connection, model=ScreenmarkFact):
+    rows = connection.count(model)
     return rows
 
 
@@ -63,12 +67,10 @@ def drop(connection):
 
 
 def check():
-    pbar = tqdm(total=1)
-    connection = process(pbar)
+    connection = process()
     # realtime_counting(connection)
     # reading(connection)
     rows = counting(connection)
-    pbar.close()
     print(rows)
 
 
