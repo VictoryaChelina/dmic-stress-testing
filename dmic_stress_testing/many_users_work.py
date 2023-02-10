@@ -277,7 +277,7 @@ class SpectatorTesting:
         if self.configuration['ASYNC_INSERT']['ON']:
             from dmic_stress_testing.alter_to_async_insert import alter_insert
             alter_insert(self.configuration)
-            
+
         start_gen = perf_counter()
         self.gen_users()
         end_gen = perf_counter()
@@ -310,6 +310,9 @@ class SpectatorTesting:
 
 
 def main():
+    print(
+        'Время начала теста:'.ljust(40),
+        datetime.datetime.today(), '\n')
     configuration = read_config()
     start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)

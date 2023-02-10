@@ -251,6 +251,9 @@ class SpectatorTesting:
 
 
 async def main(test):
+    print(
+        'Время начала теста:'.ljust(40),
+        datetime.datetime.today(), '\n')
     start_test = perf_counter()
     await test.entr_point()
     stop_test = perf_counter()
