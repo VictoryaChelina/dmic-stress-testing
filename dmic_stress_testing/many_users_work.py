@@ -12,6 +12,7 @@ import concurrent.futures
 import csv
 import traceback
 from tqdm import tqdm
+import queue
 
 
 THREAD = True
@@ -55,6 +56,7 @@ class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
         self.f = open('./' + self.configuration['LOG'], 'w', newline='')
+        self.writer = csv.writer(self.f, delimiter=',', quotechar='|')
 
     # Словарь id: ico.Database (экземпляры подключения)
     connections = {}
@@ -62,6 +64,7 @@ class SpectatorTesting:
     # Список пользователей, которые не смогли
     # подключиться к базе за максимальное число попыток
     not_connected_users = []
+    push_q = queue.Queue()
 
     # Словарь id: rm.RandUser
     users = {}
@@ -189,8 +192,8 @@ class SpectatorTesting:
             rps = self.total_user_push / time_from_start
             self.rows_per_second.append(rps)
             # print(f'rps: {rps}', end='\r')
-            writer = csv.writer(self.f, delimiter=',', quotechar='|')
-            writer.writerow([time_from_start, self.total_user_push, rps])
+            
+            self.writer.writerow([time_from_start, self.total_user_push, rps])
             self.pbar.update(1)
         except Exception as ex:
             logging.warning(
@@ -200,8 +203,9 @@ class SpectatorTesting:
     def push_update_one_user(self, id):
         # Время отправки строк лога с клиента на dmic
         report_time = datetime.datetime.today()
-        if (report_time - self.last_push_time[id]
-                >= datetime.timedelta(seconds=self.configuration['PUSH_INT'])):
+        time_pass = (report_time - self.last_push_time[id]
+                >= datetime.timedelta(seconds=self.configuration['PUSH_INT']))
+        if time_pass:
             rows = self.gen_rows(id=id, report_time=report_time)
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
             if THREAD:
@@ -212,6 +216,8 @@ class SpectatorTesting:
             else:
                 self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
+        else: 
+            self.push_q.put(id)
 
     # Запускает цикл по connections для отправки логов
     def loops(self):
@@ -224,7 +230,13 @@ class SpectatorTesting:
                     return
                 while threading.active_count() > self.configuration["LIMIT"]:
                     continue
-                self.push_update_one_user(id=id)
+                #self.push_update_one_user(id=id)
+                self.push_q.put(id)
+        self.implement_q()
+    
+    def implement_q(self):
+        while not self.push_q.empty():
+            self.push_update_one_user(id=self.push_q.get())
 
     def interval(self):
         self.pbar = tqdm(
