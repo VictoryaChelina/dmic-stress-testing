@@ -13,6 +13,7 @@ import csv
 import traceback
 from tqdm import tqdm
 import queue
+from dmic_stress_testing.models import screenmarkfact
 
 
 THREAD = True
@@ -21,34 +22,6 @@ POOL = True
 logging.basicConfig(
     level=logging.WARNING,
     handlers=[FileHandler('err_log6.txt')])
-
-
-# Модель таблиц
-class ScreenmarkFact(ico.Model):
-    dt = ico.DateField()
-    dtm = ico.DateTimeField()
-    report_time = ico.DateTimeField()
-    user_name = ico.StringField()
-    user_domain = ico.StringField()
-    marker = ico.StringField()
-    department = ico.UInt32Field()
-    root_disk_serial = ico.StringField()
-    ipv4_address = ico.IPv4Field()
-    hw_address = ico.FixedStringField(length=17)
-
-    def row_info(self):
-        padding = 17
-        print('USER INFORMATION:')
-        print('dt:'.ljust(padding), self.dt)
-        print('dtm:'.ljust(padding), self.dtm)
-        print('report_time:'.ljust(padding), self.report_time)
-        print('user_name:'.ljust(padding), self.user_name)
-        print('user_domain:'.ljust(padding), self.user_domain)
-        print('marker:'.ljust(padding), self.marker)
-        print('department:'.ljust(padding), self.department)
-        print('root_disk_serial:'.ljust(padding), self.root_disk_serial)
-        print('ipv4_address:'.ljust(padding), self.ipv4_address)
-        print('hw_address:'.ljust(padding), self.hw_address)
 
 
 # Класс отправки псевдологов
@@ -94,6 +67,7 @@ class SpectatorTesting:
     def gen_users(self):
         for department in range(self.configuration['DEPARTMENT_NUM']):
             department = randint(1, 65355)
+            print(department)
             for user in range(self.configuration['USERS_NUM']):
                 user = rm.RandUser(department=department)
                 id = user.user_id()
@@ -104,7 +78,7 @@ class SpectatorTesting:
                     - datetime.timedelta(minutes=1))
                 self.user_rows_count[id] = 0
                 # user.user_info()
-                self.rows_const_part[id] = ScreenmarkFact(
+                self.rows_const_part[id] = screenmarkfact(
                     dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
                     dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
                     report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
@@ -206,7 +180,8 @@ class SpectatorTesting:
         time_pass = (report_time - self.last_push_time[id]
                 >= datetime.timedelta(seconds=self.configuration['PUSH_INT']))
         if time_pass:
-            rows = self.gen_rows(id=id, report_time=report_time)
+            # rows = self.gen_rows(id=id, report_time=report_time)
+            rows = [self.rows_const_part[id] for _ in range(self.configuration['ROWS_NUM'])]
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
             if THREAD:
                 threading.Thread(
@@ -230,7 +205,6 @@ class SpectatorTesting:
                     return
                 while threading.active_count() > self.configuration["LIMIT"]:
                     continue
-                #self.push_update_one_user(id=id)
                 self.push_q.put(id)
         self.implement_q()
     
@@ -312,6 +286,7 @@ class SpectatorTesting:
                 self.interval()
         except KeyboardInterrupt:
             print("Interruption")
+            logging.warning(f'Keyboard interruption during insertion')
         finally:
             self.last_insertion_time = perf_counter()
             while threading.active_count() > 2:

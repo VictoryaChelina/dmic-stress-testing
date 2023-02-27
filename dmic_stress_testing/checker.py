@@ -1,4 +1,4 @@
-from dmic_stress_testing.many_users_work import ScreenmarkFact
+from dmic_stress_testing.models import screenmarkfact, printmarkfact
 from dmic_stress_testing.common import read_config
 import logging
 import infi.clickhouse_orm as ico
@@ -46,30 +46,24 @@ def process(name='admin'):
 
 
 def reading(connection):
-    for row in ScreenmarkFact.objects_in(connection).filter(
-            ScreenmarkFact.dt == datetime.date.today()):
-        print(row.report_time)
+    for row in printmarkfact.objects_in(connection):
+        print(row)
 
 
-def counting(connection, model=ScreenmarkFact):
+def counting(connection, model=screenmarkfact):
     rows = connection.count(model)
     return rows
 
 
 def realtime_counting(connection):
     while True:
-        print(f'rows in base: {connection.count(ScreenmarkFact)}', end='\r')
-
-
-def drop(connection):
-    from infi.clickhouse_orm import migrations
-    migrations.DropTable(ScreenmarkFact)
+        print(f'rows in base: {connection.count(screenmarkfact)}', end='\r')
 
 
 def check():
     connection = process()
     # realtime_counting(connection)
-    # reading(connection)
+    reading(connection)
     rows = counting(connection)
     print(rows)
 
