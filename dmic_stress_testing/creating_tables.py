@@ -117,16 +117,20 @@ class stats_by_date(ico.Model):
 
 def creating():
     db = process()
-    db.create_table(screenmarkfact)
-    db.create_table(printmarkfact)
-    db.create_table(pc_activity)
-    db.create_table(pc_first_last_seen)
-    db.create_table(department_activity)
-    db.create_table(mark_activity)
-    db.create_table(markfact)
-    db.create_table(stats_by_date)
-    db.create_table(marker_first_last_seen)
-
+    models = [
+        screenmarkfact,
+        printmarkfact,
+        pc_activity,
+        pc_first_last_seen,
+        department_activity,
+        mark_activity,
+        markfact,
+        stats_by_date,
+        marker_first_last_seen
+    ]
+    for model in models:
+        db.drop_table(model)
+        db.create_table(model)
 
 
 if __name__ == '__main__':
