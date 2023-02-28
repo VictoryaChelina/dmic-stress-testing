@@ -1,5 +1,4 @@
-from dmic_stress_testing.checker import process
-from dmic_stress_testing.script_parser import read_config
+from dmic_stress_testing.connection import process
 import csv
 import time
 import datetime
@@ -52,8 +51,12 @@ def draw_graph(x, y_1, y_2):
     plt.show()
 
 
-if __name__ == '__main__':
+def main():
     write_log()
     time_stamp, total, active = read_log() 
     draw_graph(time_stamp, total, active)
+
+
+if __name__ == '__main__':
+    main()
     

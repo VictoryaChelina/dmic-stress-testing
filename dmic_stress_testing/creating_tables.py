@@ -1,5 +1,5 @@
 import infi.clickhouse_orm as ico
-from dmic_stress_testing.checker import process
+from dmic_stress_testing.connection import process
 from enum import Enum
 from dmic_stress_testing.models import \
     screenmarkfact,\

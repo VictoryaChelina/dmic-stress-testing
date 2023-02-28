@@ -1,4 +1,4 @@
-from dmic_stress_testing.checker import process
+from dmic_stress_testing.connection import process
 from dmic_stress_testing.script_parser import read_config
 from tqdm import tqdm
 
