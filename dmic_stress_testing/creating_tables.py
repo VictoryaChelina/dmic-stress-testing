@@ -13,6 +13,111 @@ from dmic_stress_testing.models import \
     marker_first_last_seen
 
 
+def creating_mv(db):
+    query1 = '''
+        CREATE MATERIALIZED VIEW dmic.markfact_mv00 TO dmic.markfact
+    (
+
+        `dt` Date,
+
+        `dtm` DateTime,
+
+        `report_time` DateTime,
+
+        `user_name` String,
+
+        `user_domain` String,
+
+        `department` UInt32,
+
+        `root_disk_serial` String,
+
+        `marker` String,
+
+        `ipv4_address` IPv4,
+
+        `hw_address` FixedString(17),
+
+        `operation_type` UInt8
+    ) AS
+    SELECT
+        dt,
+
+        dtm,
+
+        report_time,
+
+        user_name,
+
+        user_domain,
+
+        department,
+
+        root_disk_serial,
+
+        marker,
+
+        ipv4_address,
+
+        hw_address,
+
+        1 AS operation_type
+    FROM dmic.screenmarkfact;
+    '''
+    query2 = '''
+        CREATE MATERIALIZED VIEW dmic.markfact_mv01 TO dmic.markfact
+    (
+
+        `dt` Date,
+
+        `dtm` DateTime,
+
+        `report_time` DateTime,
+
+        `user_name` String,
+
+        `user_domain` String,
+
+        `department` UInt32,
+
+        `root_disk_serial` String,
+
+        `marker` String,
+
+        `ipv4_address` IPv4,
+
+        `hw_address` FixedString(17),
+
+        `operation_type` UInt8
+    ) AS
+    SELECT
+        dt,
+
+        dtm,
+
+        report_time,
+
+        user_name,
+
+        user_domain,
+
+        department,
+
+        root_disk_serial,
+
+        marker,
+
+        ipv4_address,
+
+        hw_address,
+
+        2 AS operation_type
+    FROM dmic.printmarkfact;
+    '''
+    db._send(query1)
+    db._send(query2)
+
+
 def creating_origin_scheme():
     db = process()
     models = [
@@ -29,6 +134,7 @@ def creating_origin_scheme():
     for model in models:
         db.drop_table(model)
         db.create_table(model)
+    creating_mv(db)
 
 
 def creating_changed_scheme():
@@ -47,7 +153,7 @@ def creating_changed_scheme():
     ]
     for model in models_old:
         db.drop_table(model)
-        
+
     for model in models:
         db.drop_table(model)
         db.create_table(model)
@@ -58,5 +164,5 @@ def creating_changed_scheme():
 
 
 if __name__ == '__main__':
-    #creating_origin_scheme()
-    creating_changed_scheme()
+    creating_origin_scheme()
+    #creating_changed_scheme()
