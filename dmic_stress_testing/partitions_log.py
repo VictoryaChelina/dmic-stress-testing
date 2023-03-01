@@ -10,7 +10,7 @@ import re
 
 def write_log():
     admin = process()
-    query = f'SELECT COUNT(active), SUM(active) FROM system.parts WHERE table = \'screenmarkfact\''
+    query = f'SELECT COUNT(active), SUM(active) FROM system.parts WHERE table = \'markfact\''
     with open('partition.csv', 'w', newline='') as log:
         writer = csv.writer(log, delimiter=',', quotechar='|')
         try:

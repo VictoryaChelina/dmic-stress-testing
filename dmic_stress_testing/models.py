@@ -45,7 +45,7 @@ class pc_first_last_seen(ico.Model):
     root_disk_serial = ico.StringField()
     first_seen = ico.DateField()
     last_seen = ico.DateField()
-    engine = ico.MergeTree(
+    engine = ico.ReplacingMergeTree(
         partition_key=['toYYYYMM(last_seen)'],
         order_by=[root_disk_serial],
         index_granularity=8192)

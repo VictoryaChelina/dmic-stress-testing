@@ -13,7 +13,7 @@ import csv
 import traceback
 from tqdm import tqdm
 import queue
-from dmic_stress_testing.models import screenmarkfact
+from dmic_stress_testing.models import screenmarkfact, markfact
 
 
 THREAD = True
@@ -63,6 +63,35 @@ class SpectatorTesting:
 
     stop_threading = False
 
+
+    def db_scheme(self, id, user):
+        if self.configuration['DB_SCHEME'] == 'changed':
+            self.rows_const_part[id] = markfact(
+                    dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
+                    dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
+                    report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
+                    user_name=user.user_name,
+                    user_domain=user.user_domain,
+                    marker=user.marker,
+                    department=user.department,
+                    root_disk_serial=user.disk,
+                    ipv4_address=user.ip,
+                    hw_address=user.hw,
+                    operation_type=1)
+        else:
+            self.rows_const_part[id] = screenmarkfact(
+                    dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
+                    dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
+                    report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
+                    user_name=user.user_name,
+                    user_domain=user.user_domain,
+                    marker=user.marker,
+                    department=user.department,
+                    root_disk_serial=user.disk,
+                    ipv4_address=user.ip,
+                    hw_address=user.hw)
+
+
     # Генерируется заданное число пользователей
     def gen_users(self):
         for department in range(self.configuration['DEPARTMENT_NUM']):
@@ -78,17 +107,7 @@ class SpectatorTesting:
                     - datetime.timedelta(minutes=1))
                 self.user_rows_count[id] = 0
                 # user.user_info()
-                self.rows_const_part[id] = screenmarkfact(
-                    dt=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
-                    dtm=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
-                    report_time=datetime.datetime(1984, 1, 1, 1, 1, 1, 1),
-                    user_name=user.user_name,
-                    user_domain=user.user_domain,
-                    marker=user.marker,
-                    department=user.department,
-                    root_disk_serial=user.disk,
-                    ipv4_address=user.ip,
-                    hw_address=user.hw)
+                self.db_scheme(id, user)
         self.pbar = tqdm(total=len(self.users), desc='Connecting users')
 
     # Подключение к базе

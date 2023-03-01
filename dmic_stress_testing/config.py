@@ -1,15 +1,24 @@
 configuration = {
     # Адресс Dmic
-    "DB_URL": "http://10.11.20.97:8129",
+    # "DB_URL": "http://10.11.20.224:8123",
+    # "DB_URL": "http://10.100.150.242:8123",
+    # "DB_URL": "http://10.100.151.224:8123",
+    # "DB_URL": "http://10.11.20.209:8123",
+    "DB_URL": "http://10.11.20.97:8123",
+
+    # Схема базы данных
+    # origin - строки в markfact приходят через mv 
+    # changed - строки сразу приходят в markfact
+    "DB_SCHEME": "changed",
 
     # Промежутки попыток подключения к БД (в секундах)
     "CONNECTION_INTERVAL": 1,
 
     # Количество генерируемых строк от одного пользователя в минуту
-    "ROWS_NUM": 1000,
+    "ROWS_NUM": 6,
 
     # Количество пользователей в департаменте
-    "USERS_NUM": 1,
+    "USERS_NUM": 60000,
     # Если USERS_NUM == 1,
     # в каждом департаменте по одному пользователю, следовательно,
     # у каждого пользователя будет оригинальные логины и пароли
@@ -22,15 +31,15 @@ configuration = {
     # Следовательно, всего пользователей будет DEPARTMENT_NUM * USERS_NUM
 
     # Количество департаментов
-    "DEPARTMENT_NUM": 200,
+    "DEPARTMENT_NUM": 1,
 
     # Количество строк отправляемых за одну загрузку
     # с одного пользователя (в оригинале 100)
     # Используется только в many_users_work
-    "BATCH_SIZE": 1000,
+    "BATCH_SIZE": 100,
 
     # Время между отправкой update от пользователя в базу (в секундах)
-    "PUSH_INT": 0,
+    "PUSH_INT": 60,
 
     # Промежутки между фактами маркирования на пользователе (в секнудах)
     "MARK_INTERVAL": 10,
@@ -50,21 +59,19 @@ configuration = {
     "INTERVAL": 'loops',
 
     # Количество циклов или секунд
-    "AMOUNT": 3,
+    "AMOUNT": 10,
 
     # Имя файла для записи лога
-    "LOG": "some_6.csv",
+    "LOG": "60_minuts_40000_users.csv",
 
     # Включает асинхронную вставку в dmic
     "ASYNC_INSERT": {
-        "ON": True,
-        "MAX_DATA_SIZE": 10000,  # в байтах
-        "BUSY_TIMEOUT": 1000
+        "ON": False,
+        "MAX_DATA_SIZE": 100000,  # в байтах
+        "BUSY_TIMEOUT": 3000
         }
 }
 
 
 if __name__ == '__main__':
-    padding = 40
-    for key, item in configuration.items():
-        print(key.ljust(padding), item)
+    print(configuration)
