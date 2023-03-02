@@ -7,21 +7,27 @@ def parser():
     parser.add_argument(
         '--config',
         type=str,
-        help='give config for sress-test')
+        help='add path to your custom config'
+    )
     parser.add_argument(
         '--db',
         type=str,
-        help='add DB_URL'
+        help='add db url like http://10.11.20.224:8123'
+    )
+    parser.add_argument(
+        '--source_ip',
+        type=str,
+        help='add source ip like 10.11.20.224'
     )
     parser.add_argument(
         '--db_scheme',
         type=str,
-        help='add DB_SCHEME'
+        help='add db scheme origin or changed'
     )
     parser.add_argument(
         '--conn-int',
         type=int,
-        help='add connection interval'
+        help='add connection interval (seconds)'
     )
     parser.add_argument(
         '--rows',
@@ -46,7 +52,7 @@ def parser():
     parser.add_argument(
         '--p-int',
         type=int,
-        help='add push interval (in seconds)'
+        help='add push interval (seconds)'
     )
     parser.add_argument(
         '--m-int',
@@ -86,7 +92,7 @@ def parser():
     parser.add_argument(
         '--async_insert',
         type=bool,
-        help='set this flag if async insert to ClickHouse needed'
+        help='set this flag for using async insert to ClickHouse needed'
     )
     parser.add_argument(
         '--insert_max_data_size',
@@ -120,6 +126,8 @@ def read_config():
 
     if conf.db is not None:
         result_config["DB_URL"] = conf.db
+    if conf.source_ip is not None:
+        result_config["SOURCE_IP"] = conf.source_ip
     if conf.db_scheme is not None:
         result_config["DB_SCHEME"] = conf.db_scheme
     if conf.conn_int is not None:

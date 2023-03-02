@@ -12,11 +12,12 @@ setup(
     description="Stress tessting of DMIC server",
 
     install_requires=[
-        'infi.clickhouse-orm',
+        'infi.clickhouse-orm==2.1.0',
         'numpy',
         'aiochclient',
         'aiohttp',
-        'tqdm'
+        'tqdm',
+        'requests_toolbelt'
 
     ],
     entry_points={

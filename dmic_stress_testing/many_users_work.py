@@ -4,6 +4,7 @@ from time import perf_counter
 import dmic_stress_testing.random_marker as rm
 from dmic_stress_testing.script_parser import read_config
 import infi.clickhouse_orm as ico
+from dmic_stress_testing.p_database import p_db
 from random import randint
 import logging
 from logging import FileHandler
@@ -13,6 +14,8 @@ import csv
 import traceback
 from tqdm import tqdm
 import queue
+import requests
+from requests_toolbelt.adapters.source import SourceAddressAdapter
 from dmic_stress_testing.models import screenmarkfact, markfact
 
 
@@ -118,12 +121,13 @@ class SpectatorTesting:
             uname_ = f'department{department_number:05}'
             pass_ = f'pass{department_number:05}'
 
-            self.db = ico.Database(
+            self.db = p_db(
                 'dmic',
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
-                password=pass_)
-
+                password=pass_,
+                source_ip=self.configuration['SOURCE_IP'])
+            
             self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
