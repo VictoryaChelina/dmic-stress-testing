@@ -16,7 +16,8 @@ setup(
         'numpy',
         'aiochclient',
         'aiohttp',
-        'tqdm'
+        'tqdm',
+        'requests_toolbelt'
 
     ],
     entry_points={
