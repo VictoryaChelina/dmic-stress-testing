@@ -21,10 +21,10 @@ class p_db(Database):
         self.readonly = False
         self.timeout = timeout
 
-        source_adapter = SourceAddressAdapter(source_ip)
-        session = requests.Session()
-        session.mount('http://', source_adapter)
-        self.request_session = session
+        self.request_session = requests.Session()
+        if source_ip is not None:
+            source_adapter = SourceAddressAdapter(source_ip)
+            self.request_session.mount('http://', source_adapter)
 
         self.request_session.verify = verify_ssl_cert
         if username:
