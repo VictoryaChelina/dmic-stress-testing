@@ -127,7 +127,8 @@ class SpectatorTesting:
                 'dmic',
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
-                password=pass_)
+                password=pass_,
+                request_session=session)
 
             self.connections[id] = self.db
             logging.info(f'{id} {uname_} {pass_}: Подключился базе')
