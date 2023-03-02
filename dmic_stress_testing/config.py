@@ -6,7 +6,7 @@ configuration = {
     # "DB_URL": "http://10.11.20.209:8123",
     # "DB_URL": "http://10.11.20.97:8123",
 
-    "SOURCE_IP": "127.0.0.1",
+    "SOURCE_IP": "10.10.35.130",
 
     # Схема базы данных
     # origin - строки в markfact приходят через mv 
@@ -17,7 +17,7 @@ configuration = {
     "CONNECTION_INTERVAL": 1,
 
     # Количество генерируемых строк от одного пользователя в минуту
-    "ROWS_NUM": 100,
+    "ROWS_NUM": 1,
 
     # Количество пользователей в департаменте
     "USERS_NUM": 1,
@@ -61,7 +61,7 @@ configuration = {
     "INTERVAL": 'loops',
 
     # Количество циклов или секунд
-    "AMOUNT": 1000,
+    "AMOUNT": 1,
 
     # Имя файла для записи лога
     "LOG": "60_minuts_40000_users.csv",
