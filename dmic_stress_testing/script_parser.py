@@ -7,11 +7,17 @@ def parser():
     parser.add_argument(
         '--config',
         type=str,
-        help='give config for sress-test')
+        help='give config for sress-test'
+    )
     parser.add_argument(
         '--db',
         type=str,
         help='add DB_URL'
+    )
+    parser.add_argument(
+        '--source_ip',
+        type=str,
+        help='add SOURCE_IP'
     )
     parser.add_argument(
         '--db_scheme',
@@ -120,6 +126,8 @@ def read_config():
 
     if conf.db is not None:
         result_config["DB_URL"] = conf.db
+    if conf.source_ip is not None:
+        result_config["SOURCE_IP"] = conf.source_ip
     if conf.db_scheme is not None:
         result_config["DB_SCHEME"] = conf.db_scheme
     if conf.conn_int is not None:

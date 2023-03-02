@@ -13,6 +13,8 @@ import csv
 import traceback
 from tqdm import tqdm
 import queue
+import requests
+from requests_toolbelt.adapters.source import SourceAddressAdapter
 from dmic_stress_testing.models import screenmarkfact, markfact
 
 
@@ -118,6 +120,9 @@ class SpectatorTesting:
             uname_ = f'department{department_number:05}'
             pass_ = f'pass{department_number:05}'
 
+            source_adapter = SourceAddressAdapter(self.configuration['SOURCE_IP'])
+            session = requests.Session()
+            session.mount('http://', source_adapter)
             self.db = ico.Database(
                 'dmic',
                 db_url=self.configuration['DB_URL'],
