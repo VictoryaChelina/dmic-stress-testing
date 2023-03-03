@@ -1,0 +1,40 @@
+
+{
+    "DB_URL": "http://10.11.20.224:8123",
+
+    "SOURCE_IP": "10.11.20.220",
+
+    "DB_SCHEME": "origin",
+
+    "CONNECTION_INTERVAL": 1,
+
+    "ROWS_NUM": 6,
+
+    "USERS_NUM": 60000,
+    
+    "DEPARTMENT_NUM": 1,
+
+    "BATCH_SIZE": 100,
+
+    "PUSH_INT": 60,
+
+    "MARK_INTERVAL": 10,
+
+    "MAX_CONNECTION_ATTEMPTS": 10,
+
+    "LIMIT": 100,
+
+    "MODE": "thread",
+
+    "INTERVAL": "loops",
+
+    "AMOUNT": 10,
+
+    "LOG": "60_users.csv",
+
+    "ASYNC_INSERT": {
+        "ON": 0,
+        "MAX_DATA_SIZE": 100000, 
+        "BUSY_TIMEOUT": 3000
+        }
+}

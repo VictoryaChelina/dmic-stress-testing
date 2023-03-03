@@ -7,7 +7,7 @@ def parser():
     parser.add_argument(
         '--config',
         type=str,
-        help='add path to your custom config'
+        help='add path to your custom config in json format'
     )
     parser.add_argument(
         '--db',
