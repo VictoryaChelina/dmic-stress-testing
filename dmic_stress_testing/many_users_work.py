@@ -11,11 +11,8 @@ from logging import FileHandler
 import threading
 import concurrent.futures
 import csv
-import traceback
 from tqdm import tqdm
 import queue
-import requests
-from requests_toolbelt.adapters.source import SourceAddressAdapter
 from dmic_stress_testing.models import screenmarkfact, markfact
 
 
@@ -333,6 +330,9 @@ def main():
 
 
 def main_main(configuration):
+    print(
+        'Время начала теста:'.ljust(40),
+        datetime.datetime.today(), '\n')
     start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
