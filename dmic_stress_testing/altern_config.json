@@ -1,16 +1,16 @@
 
 {
-    "DB_URL": "http://10.11.20.224:8123",
+    "DB_URL": "http://10.11.20.97:8123",
 
-    "SOURCE_IP": "10.11.20.220",
+    "SOURCE_IP": "10.10.35.130",
 
-    "DB_SCHEME": "origin",
+    "DB_SCHEME": "original",
 
     "CONNECTION_INTERVAL": 1,
 
-    "ROWS_NUM": 6,
+    "ROWS_NUM": 10,
 
-    "USERS_NUM": 60000,
+    "USERS_NUM": 10,
     
     "DEPARTMENT_NUM": 1,
 

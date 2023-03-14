@@ -24,7 +24,8 @@ setup(
          'console_scripts': [
             'make-stress = dmic_stress_testing.common:main',
             'check = dmic_stress_testing.checker:check',
-            'partitions = dmic_stress_testing.partitions_log:main'
+            'partitions = dmic_stress_testing.partitions_log:main',
+            'create-tables = dmic_stress_testing.creating_tables:main'
         ]
     }
 )

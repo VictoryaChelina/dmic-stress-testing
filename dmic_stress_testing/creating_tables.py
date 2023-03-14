@@ -1,6 +1,5 @@
-import infi.clickhouse_orm as ico
-from dmic_stress_testing.connection import process
-from enum import Enum
+import argparse
+from dmic_stress_testing.p_database import p_db
 from dmic_stress_testing.models import \
     screenmarkfact,\
     printmarkfact,\
@@ -13,9 +12,65 @@ from dmic_stress_testing.models import \
     marker_first_last_seen
 
 
+#  т.к. библотека не позволяет добавить TTL
+from dmic_stress_testing.r_sql_tables import \
+    screenmarkfact as r_screenmarkfact,\
+    printmarkfact as r_printmarkfact,\
+    pc_activity as r_pc_activity,\
+    pc_first_last_seen as r_pc_first_last_seen,\
+    department_activity as r_department_activity,\
+    mark_activity as r_mark_activity,\
+    markfact as r_markfact,\
+    stats_by_date as r_stats_by_date,\
+    marker_first_last_seen as r_marker_first_last_seen
+
+
+changed_tables = [
+    pc_activity,
+    pc_first_last_seen,
+    department_activity,
+    mark_activity,
+    markfact,
+    stats_by_date,
+    marker_first_last_seen
+]
+
+original_tables = [
+    screenmarkfact,
+    printmarkfact,
+] + changed_tables
+
+
+changed_tables_ttl = [
+    r_pc_activity,
+    r_pc_first_last_seen,
+    r_department_activity,
+    r_mark_activity,
+    r_markfact,
+    r_stats_by_date,
+    r_marker_first_last_seen
+]
+
+original_tables_ttl = [
+    r_screenmarkfact,
+    r_printmarkfact,
+] + changed_tables_ttl
+
+tables_names = [
+    'screenmarkfact',
+    'printmarkfact',
+    'pc_activity',
+    'pc_first_last_seen',
+    'department_activity',
+    'mark_activity',
+    'markfact',
+    'stats_by_date',
+    'marker_first_last_seen'
+]
+
 def creating_mv(db):
     query1 = '''
-        CREATE MATERIALIZED VIEW dmic.markfact_mv00 TO dmic.markfact
+        CREATE MATERIALIZED VIEW IF NOT EXISTS dmic.markfact_mv00 TO dmic.markfact
     (
 
         `dt` Date,
@@ -65,7 +120,7 @@ def creating_mv(db):
     FROM dmic.screenmarkfact;
     '''
     query2 = '''
-        CREATE MATERIALIZED VIEW dmic.markfact_mv01 TO dmic.markfact
+        CREATE MATERIALIZED VIEW IF NOT EXISTS dmic.markfact_mv01 TO dmic.markfact
     (
 
         `dt` Date,
@@ -118,51 +173,155 @@ def creating_mv(db):
     db._send(query2)
 
 
-def creating_origin_scheme():
-    db = process()
-    models = [
-        screenmarkfact,
-        printmarkfact,
-        pc_activity,
-        pc_first_last_seen,
-        department_activity,
-        mark_activity,
-        markfact,
-        stats_by_date,
-        marker_first_last_seen
-    ]
-    for model in models:
-        db.drop_table(model)
+def drop_table(db):
+    for table in tables_names:
+        drop = f'DROP TABLE IF EXISTS {table}'
+        db._send(drop)
+
+
+def creating_origin_scheme(db):
+    drop_table(db)
+    for model in original_tables:
         db.create_table(model)
     creating_mv(db)
 
 
-def creating_changed_scheme():
-    db = process()
-    models_old = [
-        screenmarkfact,
-        printmarkfact,]
-    models = [
-        pc_activity,
-        pc_first_last_seen,
-        department_activity,
-        mark_activity,
-        markfact,
-        stats_by_date,
-        marker_first_last_seen
-    ]
-    for model in models_old:
-        db.drop_table(model)
-
-    for model in models:
-        db.drop_table(model)
+def creating_changed_scheme(db):
+    drop_table(db)
+    for model in changed_tables:
         db.create_table(model)
-
     for i in range(2):
         drop_v = f'DROP VIEW IF EXISTS markfact_mv0{i}'
         db._send(drop_v)
 
 
+def creating_origin_scheme_ttl(db):
+    drop_table(db)
+    for table in original_tables_ttl:
+        db._send(table)
+    creating_mv(db)
+
+
+def creating_changed_scheme_ttl(db):
+    drop_table(db)
+    for table in changed_tables_ttl:
+        db._send(table)
+
+
+def parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--db',
+        type=str,
+        help='http://localhost:8123/'
+    )
+    parser.add_argument(
+        '--scheme',
+        type=int,
+        help='original = 0 / changed = 1'
+    )
+    parser.add_argument(
+        '--ttl',
+        type=int,
+        help='no ttl = 0 / ttl = 1'
+    )
+    parser.add_argument(
+        '--alter_ttl',
+        type=str,
+        help='DAY / MONTH / YEAR'
+    )
+    args = parser.parse_args()
+    return args
+
+
+def read_config():
+    conf = parser()
+    result_config = {}
+
+    if conf.alter_ttl is not None:
+        result_config["ALTER_TTL"] = conf.alter_ttl
+
+    else:
+        if conf.scheme is not None:
+            result_config["SCHEME"] = conf.scheme
+        else:
+            print("Add db scheme")
+            return False
+
+        if conf.ttl is not None:
+            result_config["TTL"] = conf.ttl
+        else:
+            print("Add ttl")
+            return False
+    
+    if conf.db is not None:
+        result_config["DB_URL"] = conf.db
+    else:
+        print("Add db address")
+        return False
+    return result_config
+
+
+def connect(configuration):
+    try:
+        uname_ = 'admin'
+        pass_ = f'yuramarkin'
+        connection = p_db(
+            'dmic',
+            db_url=configuration['DB_URL'],
+            username=uname_,
+            password=pass_
+            )
+        return True, connection
+    except Exception as ex_:
+        print(ex_)
+    return False, False
+
+
+def process(configuration):
+    connected = False
+    c = 0
+    while not connected and c < 3:
+        c += 1
+        connected, connection = connect(configuration)
+    return connection
+
+
+def set_ttl(db, interval):
+    for table in tables_names:
+        try:
+            db._send(f'ALTER TABLE {table} MODIFY TTL dt + INTERVAL 1 {interval};')
+        except Exception as ex_:
+            print(ex_)
+
+
+def main():
+    configuration = read_config()
+    if not configuration:
+        return
+    db = process(configuration)
+    print(configuration)
+
+    if "ALTER_TTL" in configuration.keys():
+        set_ttl(db, interval=configuration["ALTER_TTL"])
+
+    else:
+        if configuration["SCHEME"]:
+            print("Changed scheme (NO screenmark and printmark)")
+            if configuration["TTL"]:
+                print("With TTL")
+                creating_changed_scheme_ttl(db)
+            else:
+                print("NO TTL")
+                creating_changed_scheme(db)
+        else:
+            print("Original scheme (screenmark and printmark)")
+            if configuration["TTL"]:
+                print("With TTL")
+                creating_origin_scheme_ttl(db)
+            else:
+                print("NO TTL")
+                creating_origin_scheme(db)
+
 if __name__ == '__main__':
-    creating_origin_scheme()
-    #creating_changed_scheme()
+    main()
