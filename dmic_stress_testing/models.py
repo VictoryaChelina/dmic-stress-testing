@@ -22,6 +22,8 @@ class screenmarkfact(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=(dtm, department),
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class printmarkfact(screenmarkfact):
@@ -39,6 +41,8 @@ class pc_activity(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=(root_disk_serial, dt),
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class pc_first_last_seen(ico.Model):
@@ -49,6 +53,8 @@ class pc_first_last_seen(ico.Model):
         partition_key=['toYYYYMM(last_seen)'],
         order_by=[root_disk_serial],
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class department_activity(ico.Model):
@@ -60,6 +66,8 @@ class department_activity(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=[department, dt],
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class mark_activity(ico.Model):
@@ -74,6 +82,8 @@ class mark_activity(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=[marker, dt],
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class marker_first_last_seen(ico.Model):
@@ -84,6 +94,8 @@ class marker_first_last_seen(ico.Model):
         partition_key=['toYYYYMM(last_seen)'],
         order_by=[marker],
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class markfact(ico.Model):
@@ -102,6 +114,8 @@ class markfact(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=(dtm, department),
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
 
 
 class stats_by_date(ico.Model):
@@ -112,3 +126,5 @@ class stats_by_date(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=[dt],
         index_granularity=8192)
+    ttl_amount = 1
+    ttl_interval = 'MONTH'

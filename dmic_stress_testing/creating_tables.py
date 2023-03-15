@@ -197,15 +197,19 @@ def creating_changed_scheme(db):
 
 def creating_origin_scheme_ttl(db):
     drop_table(db)
-    for table in original_tables_ttl:
-        db._send(table)
+    for model in original_tables:
+        db.create_table(model)
+        if "ttl_amount" in vars(model):
+            set_ttl(db, model)
     creating_mv(db)
 
 
 def creating_changed_scheme_ttl(db):
     drop_table(db)
-    for table in changed_tables_ttl:
-        db._send(table)
+    for model in changed_tables:
+        db.create_table(model)
+        if "ttl_amount" in vars(model):
+            set_ttl(db, model)
 
 
 def parser():
@@ -287,12 +291,12 @@ def process(configuration):
     return connection
 
 
-def set_ttl(db, interval):
-    for table in tables_names:
-        try:
-            db._send(f'ALTER TABLE {table} MODIFY TTL dt + INTERVAL 1 {interval};')
-        except Exception as ex_:
-            print(ex_)
+def set_ttl(db, model):
+    if 'dt' in vars(model):
+        date_column = 'dt'
+    else:
+        date_column = 'last_seen'
+    db._send(f'ALTER TABLE {model.table_name()} MODIFY TTL {date_column} + INTERVAL {model.ttl_amount} {model.ttl_interval};')
 
 
 def main():
