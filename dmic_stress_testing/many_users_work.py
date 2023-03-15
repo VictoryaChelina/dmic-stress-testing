@@ -168,7 +168,7 @@ class SpectatorTesting:
         row = self.rows_const_part[id]
         for i in range(self.configuration['ROWS_NUM'], 0, -1):
             mark_time = report_time - delta * i
-            row.dt = mark_time #- datetime.timedelta(days=2)
+            row.dt = mark_time - datetime.timedelta(weeks=8)
             row.dtm = mark_time
             row.report_time = report_time
             rows.append(row)
