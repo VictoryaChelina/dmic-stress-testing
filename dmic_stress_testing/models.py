@@ -1,3 +1,4 @@
+import abc
 import infi.clickhouse_orm as ico
 from enum import Enum
 
@@ -7,7 +8,24 @@ class MarkOperationType(Enum):
     PRINT  = 2
 
 
-class screenmarkfact(ico.Model):
+class DTField()
+
+class TTLTable(ico.Model):
+    ttl_amount = 1
+    ttl_interval = 'MONTH'
+
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        '''Return DateField column for table'''
+        raise NotImplementedError(f'In class {cls}')
+
+    @classmethod
+    def set_ttl(cls, db):
+        sql = f'ALTER TABLE {cls.table_name()} MODIFY TTL {cls.ttl_date()} + INTERVAL {cls.ttl_amount} {cls.ttl_interval};'
+        db._send(sql)
+
+
+class screenmarkfact(TTLTable):
     dt = ico.DateField()
     dtm = ico.DateTimeField()
     report_time = ico.DateTimeField()
@@ -22,15 +40,27 @@ class screenmarkfact(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=(dtm, department),
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.dt
 
 
 class printmarkfact(screenmarkfact):
     pass
+    
+
+class ModelWithDT(ico.Model):
+    dt = ico.DateField()
 
 
-class pc_activity(ico.Model):
+class TTLTableFromDT(TTLTable):
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.dt
+
+
+class pc_activity(TTLTableFromDT):
     root_disk_serial = ico.StringField()
     dt = ico.DateField()
     user_name = ico.StringField()
@@ -41,11 +71,9 @@ class pc_activity(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=(root_disk_serial, dt),
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
 
 
-class pc_first_last_seen(ico.Model):
+class pc_first_last_seen(TTLTable):
     root_disk_serial = ico.StringField()
     first_seen = ico.DateField()
     last_seen = ico.DateField()
@@ -53,11 +81,13 @@ class pc_first_last_seen(ico.Model):
         partition_key=['toYYYYMM(last_seen)'],
         order_by=[root_disk_serial],
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.last_seen
 
 
-class department_activity(ico.Model):
+class department_activity(TTLTable):
     dt = ico.DateField()
     department = ico.UInt32Field()
     row_count = ico.Int32Field()
@@ -66,11 +96,13 @@ class department_activity(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=[department, dt],
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.dt
 
 
-class mark_activity(ico.Model):
+class mark_activity(TTLTable):
     marker = ico.StringField()
     dt = ico.DateField()
     root_disk_serial = ico.StringField()
@@ -82,11 +114,13 @@ class mark_activity(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=[marker, dt],
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.dt
 
 
-class marker_first_last_seen(ico.Model):
+class marker_first_last_seen(TTLTable):
     marker = ico.StringField()
     first_seen = ico.DateField()
     last_seen = ico.DateField()
@@ -94,11 +128,13 @@ class marker_first_last_seen(ico.Model):
         partition_key=['toYYYYMM(last_seen)'],
         order_by=[marker],
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.last_seen
 
 
-class markfact(ico.Model):
+class markfact(TTLTable):
     dt = ico.DateField()
     dtm = ico.DateTimeField()
     report_time = ico.DateTimeField()
@@ -114,11 +150,13 @@ class markfact(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=(dtm, department),
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.dt
 
 
-class stats_by_date(ico.Model):
+class stats_by_date(TTLTable):
     dt = ico.DateField()
     row_count = ico.Int32Field()
     engine = ico.SummingMergeTree(
@@ -126,5 +164,7 @@ class stats_by_date(ico.Model):
         partition_key=['toYYYYMM(dt)'],
         order_by=[dt],
         index_granularity=8192)
-    ttl_amount = 1
-    ttl_interval = 'MONTH'
+    
+    @classmethod
+    def ttl_date(cls) -> ico.DateField:
+        return cls.dt

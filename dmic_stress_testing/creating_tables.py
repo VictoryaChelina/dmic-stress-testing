@@ -1,4 +1,5 @@
 import argparse
+from dmic_stress_testing.connection import process
 from dmic_stress_testing.p_database import p_db
 from dmic_stress_testing.models import \
     screenmarkfact,\
@@ -199,8 +200,7 @@ def creating_origin_scheme_ttl(db):
     drop_table(db)
     for model in original_tables:
         db.create_table(model)
-        if "ttl_amount" in vars(model):
-            set_ttl(db, model)
+        model.set_ttl(db=db)
     creating_mv(db)
 
 
@@ -264,31 +264,6 @@ def read_config():
         print("Add db address")
         return False
     return result_config
-
-
-def connect(configuration):
-    try:
-        uname_ = 'admin'
-        pass_ = f'yuramarkin'
-        connection = p_db(
-            'dmic',
-            db_url=configuration['DB_URL'],
-            username=uname_,
-            password=pass_
-            )
-        return True, connection
-    except Exception as ex_:
-        print(ex_)
-    return False, False
-
-
-def process(configuration):
-    connected = False
-    c = 0
-    while not connected and c < 3:
-        c += 1
-        connected, connection = connect(configuration)
-    return connection
 
 
 def set_ttl(db, model):
