@@ -208,8 +208,7 @@ def creating_changed_scheme_ttl(db):
     drop_table(db)
     for model in changed_tables:
         db.create_table(model)
-        if "ttl_amount" in vars(model):
-            set_ttl(db, model)
+        model.set_ttl(db=db)
 
 
 def parser():

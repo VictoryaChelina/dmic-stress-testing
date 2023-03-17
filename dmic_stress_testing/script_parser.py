@@ -30,6 +30,11 @@ def parser():
         help='add connection interval (seconds)'
     )
     parser.add_argument(
+        '--d_rows',
+        type=int,
+        help='add connection interval (seconds)'
+    )
+    parser.add_argument(
         '--rows',
         type=int,
         help='add rows number per one user'
@@ -134,6 +139,8 @@ def read_config():
         result_config["CONNECTION_INTERVAL"] = conf.conn_int
     if conf.rows is not None:
         result_config["ROWS_NUM"] = conf.rows
+    if conf.d_rows is not None:
+        result_config["D_ROWS"] = conf.d_rows
     if conf.users is not None:
         result_config["USERS_NUM"] = conf.users
     if conf.depart is not None:

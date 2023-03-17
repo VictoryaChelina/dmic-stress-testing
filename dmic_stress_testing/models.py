@@ -7,8 +7,11 @@ class MarkOperationType(Enum):
     SCREEN = 1
     PRINT  = 2
 
+def date_field():
+    def wrapper_date_field(field):
+        str(field)
+    return wrapper_date_field()
 
-class DTField()
 
 class TTLTable(ico.Model):
     ttl_amount = 1
@@ -49,10 +52,6 @@ class screenmarkfact(TTLTable):
 class printmarkfact(screenmarkfact):
     pass
     
-
-class ModelWithDT(ico.Model):
-    dt = ico.DateField()
-
 
 class TTLTableFromDT(TTLTable):
     @classmethod
