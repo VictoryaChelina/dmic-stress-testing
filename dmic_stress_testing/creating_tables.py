@@ -221,12 +221,12 @@ def parser():
     parser.add_argument(
         '--scheme',
         type=int,
-        help='original = 0 / changed = 1'
+        help='original = 0 (default) / changed = 1'
     )
     parser.add_argument(
         '--ttl',
         type=int,
-        help='no ttl = 0 / ttl = 1'
+        help='no ttl = 0 (default)/ ttl = 1'
     )
     parser.add_argument(
         '--alter_ttl',
@@ -248,14 +248,12 @@ def read_config():
         if conf.scheme is not None:
             result_config["SCHEME"] = conf.scheme
         else:
-            print("Add db scheme")
-            return False
+            result_config["SCHEME"] = 0
 
         if conf.ttl is not None:
             result_config["TTL"] = conf.ttl
         else:
-            print("Add ttl")
-            return False
+            result_config["TTL"] = 0
     
     if conf.db is not None:
         result_config["DB_URL"] = conf.db
