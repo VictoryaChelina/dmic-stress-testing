@@ -221,8 +221,9 @@ class SpectatorTesting:
             total=len(self.users) * self.configuration['AMOUNT'],
             desc='Inserting rows')
         for _ in range(self.configuration['AMOUNT']):
-            shuffled_id = shuffle(list(self.users.keys()))
-            for id in shuffled_id:
+            ids = list(self.users.keys())
+            shuffle(ids)
+            for id in ids:
                 if self.stop_threading:
                     return
                 while threading.active_count() > self.configuration["LIMIT"]:
