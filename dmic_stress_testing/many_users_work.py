@@ -14,6 +14,7 @@ import csv
 from tqdm import tqdm
 import queue
 from dmic_stress_testing.models import screenmarkfact, markfact
+from random import shuffle
 
 
 THREAD = True
@@ -220,7 +221,8 @@ class SpectatorTesting:
             total=len(self.users) * self.configuration['AMOUNT'],
             desc='Inserting rows')
         for _ in range(self.configuration['AMOUNT']):
-            for id in self.users.keys():
+            shuffled_id = shuffle(self.users.keys())
+            for id in shuffled_id:
                 if self.stop_threading:
                     return
                 while threading.active_count() > self.configuration["LIMIT"]:
