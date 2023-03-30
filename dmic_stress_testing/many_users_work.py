@@ -20,17 +20,17 @@ from random import shuffle
 THREAD = True
 POOL = True
 
-logging.basicConfig(
-    level=logging.WARNING,
-    handlers=[FileHandler('err_log6.txt')])
+# logging.basicConfig(
+#     level=logging.WARNING,
+#     handlers=[FileHandler('err_log6.txt')])
 
 
 # Класс отправки псевдологов
 class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
-        self.f = open('./' + self.configuration['LOG'], 'w', newline='')
-        self.writer = csv.writer(self.f, delimiter=',', quotechar='|')
+        # self.f = open('./' + self.configuration['LOG'], 'w', newline='')
+        # self.writer = csv.writer(self.f, delimiter=',', quotechar='|')
 
     # Словарь id: ico.Database (экземпляры подключения)
     connections = {}
@@ -127,10 +127,11 @@ class SpectatorTesting:
                 source_ip=self.configuration['SOURCE_IP'])
             
             self.connections[id] = self.db
-            logging.info(f'{id} {uname_} {pass_}: Подключился базе')
+            # logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
         except Exception as ex:
-            logging.warning(f'Exeption "{ex} while connectiong {uname_} {pass_}')
+            pass
+            # logging.warning(f'Exeption "{ex} while connectiong {uname_} {pass_}')
         return False
 
     def process(self, id):
@@ -188,11 +189,12 @@ class SpectatorTesting:
             self.rows_per_second.append(rps)
             # print(f'rps: {rps}', end='\r')
             
-            self.writer.writerow([time_from_start, self.total_user_push, rps])
+            # self.writer.writerow([time_from_start, self.total_user_push, rps])
             self.pbar.update(1)
         except Exception as ex:
-            logging.warning(
-                f'Exeption "{ex}" accured while pushing rows')
+            print(f'Exeption "{ex}" accured while pushing rows')
+            # logging.warning(
+            #     f'Exeption "{ex}" accured while pushing rows')
             self.stop_threading = True
 
     def push_update_one_user(self, id):
@@ -287,11 +289,11 @@ class SpectatorTesting:
             from dmic_stress_testing.alter_to_async_insert import alter_insert
             alter_insert(self.configuration)
 
-        start_gen = perf_counter()
+        # start_gen = perf_counter()
         self.gen_users()
-        end_gen = perf_counter()
-        logging.warning(f'Generated users {len(self.users)} in \
-            {end_gen-start_gen} seconds')
+        # end_gen = perf_counter()
+        # logging.warning(f'Generated users {len(self.users)} in \
+        #     {end_gen-start_gen} seconds')
         self.start_connection_time = perf_counter()
         self.connect_users()  # Пользователи подключаются к базе
         self.stop_connection_time = perf_counter()
@@ -302,20 +304,20 @@ class SpectatorTesting:
         self.start_insertion_time = perf_counter()
         try:
             if self.configuration['INTERVAL'] == 'loops':
-                logging.debug(f'start loops')
+                # logging.debug(f'start loops')
                 self.loops()
             else:
-                logging.debug(f'start interval')
+                # logging.debug(f'start interval')
                 self.interval()
         except KeyboardInterrupt:
             print("Interruption")
-            logging.warning(f'Keyboard interruption during insertion')
+            # logging.warning(f'Keyboard interruption during insertion')
         finally:
             self.last_insertion_time = perf_counter()
             while threading.active_count() > 2:
                 continue
             self.pbar.close()
-            self.f.close()
+            # self.f.close()
             self.metrics()
 
 
@@ -328,7 +330,7 @@ def main():
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
     stop_test = perf_counter()
-    logging.warning(f'test worked in {stop_test-start_test} seconds')
+    # logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
@@ -336,11 +338,11 @@ def main_main(configuration):
     print(
         'Время начала теста:'.ljust(40),
         datetime.datetime.today(), '\n')
-    start_test = perf_counter()
+    # start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
-    stop_test = perf_counter()
-    logging.warning(f'test worked in {stop_test-start_test} seconds')
+    # stop_test = perf_counter()
+    # logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
