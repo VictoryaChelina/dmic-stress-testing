@@ -146,6 +146,7 @@ class SpectatorTesting:
                 time.sleep(self.configuration['CONNECTION_INTERVAL'])
         if not self.connected:
             self.not_connected_users.append(id)
+            self.connections.pop(id)
         else:
             self.pbar.update(1)
 
@@ -223,11 +224,13 @@ class SpectatorTesting:
             total=len(self.users) * self.configuration['AMOUNT'],
             desc='Inserting rows')
         for _ in range(self.configuration['AMOUNT']):
-            ids = list(self.users.keys())
+            ids = list(self.connections.keys())
             shuffle(ids)
             for id in ids:
                 if self.stop_threading:
                     return
+                if not self.connections[id]:
+                    continue
                 while threading.active_count() > self.configuration["LIMIT"]:
                     continue
                 self.push_q.put(id)
