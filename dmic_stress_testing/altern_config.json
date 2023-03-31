@@ -1,5 +1,5 @@
 {
-    "DB_URL": "http://10.11.20.97:8123",
+    "DB_URL": "http://10.11.20.143:8123",
 
     "SOURCE_IP": "10.10.35.130",
 
@@ -7,9 +7,11 @@
 
     "CONNECTION_INTERVAL": 1,
 
-    "ROWS_NUM": 10,
+    "ROWS_NUM": 6,
 
-    "USERS_NUM": 10,
+    "D_ROWS": 0,
+
+    "USERS_NUM": 60000,
     
     "DEPARTMENT_NUM": 1,
 
@@ -27,7 +29,7 @@
 
     "INTERVAL": "loops",
 
-    "AMOUNT": 10,
+    "AMOUNT": 5000,
 
     "LOG": "60_users.csv",
 

@@ -194,6 +194,7 @@ class SpectatorTesting:
             self.pbar.update(1)
         except Exception as ex:
             print(f'Exeption "{ex}" accured while pushing rows')
+            self.process(id)  # если ошибка, пробуем переподключить
             # logging.warning(
             #     f'Exeption "{ex}" accured while pushing rows')
             self.stop_threading = True
