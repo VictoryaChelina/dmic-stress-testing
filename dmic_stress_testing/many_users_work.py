@@ -193,7 +193,8 @@ class SpectatorTesting:
             # self.writer.writerow([time_from_start, self.total_user_push, rps])
             self.pbar.update(1)
         except Exception as ex:
-            print(f'Exeption "{ex}" accured while pushing rows')
+            exception_time = datetime.datetime.today()
+            print(f'{exception_time} Exeption "{ex}" accured while pushing rows')
             self.process(id)  # если ошибка, пробуем переподключить
             # logging.warning(
             #     f'Exeption "{ex}" accured while pushing rows')
