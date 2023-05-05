@@ -14,79 +14,79 @@ def parser():
     parser.add_argument(
         '--db',
         type=str,
-        help='Add database url like http://10.11.20.224:8123.',
+        help='Add database url in http://x.x.x.x:x format.',
     )
     parser.add_argument(
         '--source_ip',
         type=str,
-        help='Add source ip like 10.11.20.224.'
+        help='Add special source ip if there is additionl interfaces in x.x.x.x format.'
     )
     parser.add_argument(
         '--db_scheme',
         type=str,
         choices=['origin', 'changed'],
-        help='Add db scheme origin or changed.'
+        help='Add db scheme origin or changed (default - origin).'
     )
     parser.add_argument(
         '--conn-int',
         type=int,
-        help='Add connection interval.'
+        help='Add connection interval (default - 1s).'
     )
     parser.add_argument(
         '--d_rows',
         type=int,
-        help='Add if you need to test ttl (days).'
+        help='Add if you need to test ttl (default - 0 days).'
     )
     parser.add_argument(
         '--rows',
         type=int,
-        help='Add rows number per one user.'
+        help='Add rows number per one user (default - 6).'
     )
     parser.add_argument(
         '--users',
         type=int,
-        help='Add users number per one department.'
+        help='Add users number per one department (default - 1000).'
     )
     parser.add_argument(
         '--depart',
         type=int,
-        help='Add departments number.'
+        help='Add departments number (default - 60).'
     )
     parser.add_argument(
         '--p-int',
         type=int,
-        help='Add push interval (seconds).'
+        help='Add push interval (default - 60s).'
     )
     parser.add_argument(
         '--m-int',
         type=int,
-        help='Add mark interval for screenmark (seconds).'
+        help='Add mark interval for screenmark (default - 10s).'
     )
     parser.add_argument(
         '--m-con-at',
         type=int,
-        help='Add max connection attempts for 1 user.'
+        help='Add max connection attempts for 1 user (default - 10).'
     )
     parser.add_argument(
         '--interval',
         type=str,
         choices=['interval', 'loops'],
-        help='Add test duration.'
+        help='Add test duration (default - loops).'
     )
     parser.add_argument(
         '--amount',
         type=int,
-        help='Add amount of loops or seconds for test.'
+        help='Add amount of loops or seconds for test (default - 1).'
     )
     parser.add_argument(
         '--log',
         type=str,
-        help='Add log file path.'
+        help='Add log file path (default - stress_test_log.csv).'
     )
     parser.add_argument(
         '--limit',
         type=int,
-        help='Add thread limit.'
+        help='Add thread limit (default - 100).'
     )
     args = parser.parse_args()
     return args
