@@ -1,5 +1,7 @@
 import argparse
 import json
+import sys
+import re
 
 
 def parser():
@@ -7,108 +9,111 @@ def parser():
     parser.add_argument(
         '--config',
         type=str,
-        help='add path to your custom config in json format'
+        help='Add path to your custom config in json format.'
     )
     parser.add_argument(
         '--db',
         type=str,
-        help='add db url like http://10.11.20.224:8123'
+        help='Add database url like http://10.11.20.224:8123.',
     )
     parser.add_argument(
         '--source_ip',
         type=str,
-        help='add source ip like 10.11.20.224'
+        help='Add source ip like 10.11.20.224.'
     )
     parser.add_argument(
         '--db_scheme',
         type=str,
-        help='add db scheme origin or changed'
+        choices=['origin', 'changed'],
+        help='Add db scheme origin or changed.'
     )
     parser.add_argument(
         '--conn-int',
         type=int,
-        help='add connection interval (seconds)'
+        help='Add connection interval.'
     )
     parser.add_argument(
         '--d_rows',
         type=int,
-        help='add connection interval (seconds)'
+        help='Add if you need to test ttl (days).'
     )
     parser.add_argument(
         '--rows',
         type=int,
-        help='add rows number per one user'
+        help='Add rows number per one user.'
     )
     parser.add_argument(
         '--users',
         type=int,
-        help='add users number per one department'
+        help='Add users number per one department.'
     )
     parser.add_argument(
         '--depart',
         type=int,
-        help='add departments number'
+        help='Add departments number.'
     )
     parser.add_argument(
         '--batch',
         type=int,
-        help='add batch size'
+        help='Add batch size.'
     )
     parser.add_argument(
         '--p-int',
         type=int,
-        help='add push interval (seconds)'
+        help='Add push interval (seconds).'
     )
     parser.add_argument(
         '--m-int',
         type=int,
-        help='add mark interval for screenmark'
+        help='Add mark interval for screenmark (seconds).'
     )
     parser.add_argument(
         '--m-con-at',
         type=int,
-        help='add max connection attempts for 1 user'
+        help='Add max connection attempts for 1 user.'
     )
     parser.add_argument(
         '--async_limit',
         type=int,
-        help='add async tasks limit'
+        help='Add async tasks limit.'
     )
     parser.add_argument(
         '--mode',
         type=str,
-        help='choose async or thread mode'
+        choices=['async', 'thread'],
+        help='Choose test mode.'
     )
     parser.add_argument(
         '--interval',
         type=str,
-        help='add "interval" for time interval or "loops"'
+        choices=['interval', 'loops'],
+        help='Add test duration.'
     )
     parser.add_argument(
         '--amount',
         type=int,
-        help='add amount of loops or seconds for test'
+        help='Add amount of loops or seconds for test.'
     )
     parser.add_argument(
         '--log',
         type=str,
-        help='add log file name'
+        help='Add log file path.'
     )
     parser.add_argument(
         '--async_insert',
         type=bool,
-        help='set this flag for using async insert to ClickHouse needed'
+        help='Set this flag for using async insert to ClickHouse needed.'
     )
     parser.add_argument(
         '--insert_max_data_size',
         type=int,
-        help='add maximum amount of rows per async insertion \
-            (if --async_insert set)'
+        help='Add maximum amount of rows per async insertion \
+            (if --async_insert set).'
     )
     parser.add_argument(
         '--insert_busy_timeout',
         type=int,
-        help='add timeout for async insertion in ms (if --async_insert set)'
+        help='Add timeout for async insertion in ms (if --async_insert set).'
     )
     args = parser.parse_args()
     return args
@@ -119,16 +124,25 @@ def read_config():
     from dmic_stress_testing.config import configuration
     result_config = configuration
 
+    msg = "Database url is required for this test"
+    if (conf.config is None and conf.db is None):
+        sys.exit(msg)
+
     if conf.config is not None:
         with open(conf.config) as file:
             alter_conf = json.load(file)
+            if "DB_URL" not in alter_conf:
+                sys.exit(msg)
+            pattern = "http:\/\/\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}"
+            if re.match(string=alter_conf["DB_URL"], pattern=pattern) is None:
+                sys.exit("Database URL should be in http://x.x.x.x:x format")
             for property, value in alter_conf.items():
                 if type(value) == dict:
                     for prop in value.keys():
                         result_config[property][prop] = value[prop]
                 else:
                     result_config[property] = alter_conf[property]
-
+    
     if conf.db is not None:
         result_config["DB_URL"] = conf.db
     if conf.source_ip is not None:
@@ -173,3 +187,5 @@ def read_config():
             conf.insert_busy_timeout
 
     return result_config
+
+print(read_config())
