@@ -29,8 +29,6 @@
 
     "INTERVAL": "loops",
 
-    "AMOUNT": 1,
-
-    "LOG": "60_users.csv"
+    "AMOUNT": 1
 
 }

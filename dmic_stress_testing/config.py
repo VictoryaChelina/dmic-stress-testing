@@ -57,7 +57,7 @@ configuration = {
     "AMOUNT": 1,
 
     # Имя файла для записи лога
-    "LOG": "stress_test_log.csv",
+    "LOG": None,
 
 }
 

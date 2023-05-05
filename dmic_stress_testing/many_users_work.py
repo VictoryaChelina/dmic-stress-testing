@@ -29,8 +29,9 @@ POOL = True
 class SpectatorTesting:
     def __init__(self, configuration):
         self.configuration = configuration
-        # self.f = open('./' + self.configuration['LOG'], 'w', newline='')
-        # self.writer = csv.writer(self.f, delimiter=',', quotechar='|')
+        if self.configuration['LOG'] is not None:
+            self.f = open('./' + self.configuration['LOG'], 'w', newline='')
+            self.writer = csv.writer(self.f, delimiter=',', quotechar='|')
 
     # Словарь id: ico.Database (экземпляры подключения)
     connections = {}
@@ -190,7 +191,8 @@ class SpectatorTesting:
             self.rows_per_second.append(rps)
             # print(f'rps: {rps}', end='\r')
             
-            # self.writer.writerow([time_from_start, self.total_user_push, rps])
+            if self.configuration["LOG"] is not None:
+                self.writer.writerow([time_from_start, self.total_user_push, rps])
             self.pbar.update(1)
         except Exception as ex:
             exception_time = datetime.datetime.today()
