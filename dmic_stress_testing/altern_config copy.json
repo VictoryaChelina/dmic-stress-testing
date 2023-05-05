@@ -1,8 +1,6 @@
 {
     "DB_URL": "http://10.11.20.143:8123",
 
-    
-
     "DB_SCHEME": "original",
 
     "CONNECTION_INTERVAL": 1,

@@ -20,11 +20,6 @@ from random import shuffle
 THREAD = True
 POOL = True
 
-# logging.basicConfig(
-#     level=logging.WARNING,
-#     handlers=[FileHandler('err_log6.txt')])
-
-
 # Класс отправки псевдологов
 class SpectatorTesting:
     def __init__(self, configuration):
@@ -128,11 +123,9 @@ class SpectatorTesting:
                 source_ip=self.configuration['SOURCE_IP'])
             
             self.connections[id] = self.db
-            # logging.info(f'{id} {uname_} {pass_}: Подключился базе')
             return True
-        except Exception as ex:
+        except Exception:
             pass
-            # logging.warning(f'Exeption "{ex} while connectiong {uname_} {pass_}')
         return False
 
     def process(self, id):
@@ -198,8 +191,6 @@ class SpectatorTesting:
             exception_time = datetime.datetime.today()
             print(f'{exception_time} Exeption "{ex}" accured while pushing rows')
             self.process(id)  # если ошибка, пробуем переподключить
-            # logging.warning(
-            #     f'Exeption "{ex}" accured while pushing rows')
             self.stop_threading = True
 
     def push_update_one_user(self, id):
@@ -209,7 +200,6 @@ class SpectatorTesting:
                 >= datetime.timedelta(seconds=self.configuration['PUSH_INT']))
         if time_pass:
             rows = self.gen_rows(id=id, report_time=report_time)
-            #rows = [self.rows_const_part[id] for _ in range(self.configuration['ROWS_NUM'])]
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
             if THREAD:
                 threading.Thread(
@@ -292,14 +282,9 @@ class SpectatorTesting:
             datetime.datetime.today(), '\n')
 
     def entr_point(self):
-        
-        # start_gen = perf_counter()
         self.gen_users()
-        # end_gen = perf_counter()
-        # logging.warning(f'Generated users {len(self.users)} in \
-        #     {end_gen-start_gen} seconds')
         self.start_connection_time = perf_counter()
-        self.connect_users()  # Пользователи подключаются к базе
+        self.connect_users() 
         self.stop_connection_time = perf_counter()
         while threading.active_count() > 2:
             continue
@@ -308,20 +293,16 @@ class SpectatorTesting:
         self.start_insertion_time = perf_counter()
         try:
             if self.configuration['INTERVAL'] == 'loops':
-                # logging.debug(f'start loops')
                 self.loops()
             else:
-                # logging.debug(f'start interval')
                 self.interval()
         except KeyboardInterrupt:
             print("Interruption")
-            # logging.warning(f'Keyboard interruption during insertion')
         finally:
             self.last_insertion_time = perf_counter()
             while threading.active_count() > 2:
                 continue
             self.pbar.close()
-            # self.f.close()
             self.metrics()
 
 
@@ -330,11 +311,8 @@ def main():
         'Время начала теста:'.ljust(40),
         datetime.datetime.today(), '\n')
     configuration = read_config()
-    start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
-    stop_test = perf_counter()
-    # logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
@@ -342,11 +320,8 @@ def main_main(configuration):
     print(
         'Время начала теста:'.ljust(40),
         datetime.datetime.today(), '\n')
-    # start_test = perf_counter()
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
-    # stop_test = perf_counter()
-    # logging.warning(f'test worked in {stop_test-start_test} seconds')
     return 0
 
 
