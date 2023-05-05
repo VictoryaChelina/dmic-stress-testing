@@ -1,12 +1,9 @@
 configuration = {
-    # Адресс Dmic
-    # "DB_URL": "http://10.11.20.224:8123",
-    # "DB_URL": "http://10.100.150.242:8123",
-    # "DB_URL": "http://10.100.151.224:8123",
-    # "DB_URL": "http://10.11.20.209:8123",
+    # Адрес Dmic
     "DB_URL": "http://10.11.20.224:8123",
 
-    "SOURCE_IP": "10.10.35.130",
+    # Адрес атакующей машины
+    "SOURCE_IP": None,
 
     # Схема базы данных
     # origin - строки в markfact приходят через mv 
@@ -62,10 +59,10 @@ configuration = {
     "INTERVAL": 'loops',
 
     # Количество циклов или секунд
-    "AMOUNT": 10,
+    "AMOUNT": 1,
 
     # Имя файла для записи лога
-    "LOG": "60_minuts_40000_users.csv",
+    "LOG": "stress_test_log.csv",
 
 }
 

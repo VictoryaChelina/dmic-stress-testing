@@ -83,6 +83,11 @@ def parser():
         type=str,
         help='Add log file path.'
     )
+    parser.add_argument(
+        '--limit',
+        type=int,
+        help='Add thread limit.'
+    )
     args = parser.parse_args()
     return args
 
@@ -139,7 +144,7 @@ def read_config():
         result_config["AMOUNT"] = conf.amount
     if conf.log is not None:
         result_config["LOG"] = conf.log
+    if conf.limit is not None:
+        result_config["LIMIT"] = conf.limit
 
     return result_config
-
-print(read_config())

@@ -1,7 +1,7 @@
 {
     "DB_URL": "http://10.11.20.143:8123",
 
-    "SOURCE_IP": "10.10.35.130",
+    
 
     "DB_SCHEME": "original",
 
