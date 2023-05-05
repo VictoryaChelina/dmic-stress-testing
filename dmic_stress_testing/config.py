@@ -58,9 +58,6 @@ configuration = {
     # выполняющихся асинхронных задач или тредов
     "LIMIT": 100,
 
-    # Возможные значение: async, thread
-    "MODE": "thread",
-
     # Возможные значения: loops или interval
     "INTERVAL": 'loops',
 
@@ -70,12 +67,6 @@ configuration = {
     # Имя файла для записи лога
     "LOG": "60_minuts_40000_users.csv",
 
-    # Включает асинхронную вставку в dmic
-    "ASYNC_INSERT": {
-        "ON": False,
-        "MAX_DATA_SIZE": 100000,  # в байтах
-        "BUSY_TIMEOUT": 3000
-        }
 }
 
 

@@ -22,7 +22,7 @@ setup(
     ],
     entry_points={
          'console_scripts': [
-            'make-stress = dmic_stress_testing.common:main',
+            'make-stress = dmic_stress_testing.main:main',
             'check = dmic_stress_testing.checker:check',
             'partitions = dmic_stress_testing.partitions_log:main',
             'create-tables = dmic_stress_testing.creating_tables:main'

@@ -179,7 +179,7 @@ class SpectatorTesting:
 
     def insertion(self, id, rows):
         try:
-            self.connections[id].insert(rows, self.configuration['BATCH_SIZE'])
+            self.connections[id].insert(rows, self.configuration['ROWS_NUM'])
             self.last_insertion_time = perf_counter()
             self.total_user_push += self.configuration['ROWS_NUM']
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
@@ -290,10 +290,7 @@ class SpectatorTesting:
             datetime.datetime.today(), '\n')
 
     def entr_point(self):
-        if self.configuration['ASYNC_INSERT']['ON']:
-            from dmic_stress_testing.alter_to_async_insert import alter_insert
-            alter_insert(self.configuration)
-
+        
         # start_gen = perf_counter()
         self.gen_users()
         # end_gen = perf_counter()

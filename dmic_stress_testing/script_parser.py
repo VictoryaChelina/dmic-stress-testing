@@ -53,11 +53,6 @@ def parser():
         help='Add departments number.'
     )
     parser.add_argument(
-        '--batch',
-        type=int,
-        help='Add batch size.'
-    )
-    parser.add_argument(
         '--p-int',
         type=int,
         help='Add push interval (seconds).'
@@ -71,17 +66,6 @@ def parser():
         '--m-con-at',
         type=int,
         help='Add max connection attempts for 1 user.'
-    )
-    parser.add_argument(
-        '--async_limit',
-        type=int,
-        help='Add async tasks limit.'
-    )
-    parser.add_argument(
-        '--mode',
-        type=str,
-        choices=['async', 'thread'],
-        help='Choose test mode.'
     )
     parser.add_argument(
         '--interval',
@@ -98,22 +82,6 @@ def parser():
         '--log',
         type=str,
         help='Add log file path.'
-    )
-    parser.add_argument(
-        '--async_insert',
-        type=bool,
-        help='Set this flag for using async insert to ClickHouse needed.'
-    )
-    parser.add_argument(
-        '--insert_max_data_size',
-        type=int,
-        help='Add maximum amount of rows per async insertion \
-            (if --async_insert set).'
-    )
-    parser.add_argument(
-        '--insert_busy_timeout',
-        type=int,
-        help='Add timeout for async insertion in ms (if --async_insert set).'
     )
     args = parser.parse_args()
     return args
@@ -159,32 +127,18 @@ def read_config():
         result_config["USERS_NUM"] = conf.users
     if conf.depart is not None:
         result_config["DEPARTMENT_NUM"] = conf.depart
-    if conf.batch is not None:
-        result_config["BATCH_SIZE"] = conf.batch
     if conf.p_int is not None:
         result_config["PUSH_INT"] = conf.p_int
     if conf.m_int is not None:
         result_config["MARK_INTERVAL"] = conf.m_int
     if conf.m_con_at is not None:
         result_config["MAX_CONNECTION_ATTEMPTS"] = conf.m_con_at
-    if conf.async_limit is not None:
-        result_config["ASYNC_LIMIT"] = conf.async_limit
-    if conf.mode is not None:
-        result_config["MODE"] = conf.mode
     if conf.interval is not None:
         result_config["INTERVAL"] = conf.interval
     if conf.amount is not None:
         result_config["AMOUNT"] = conf.amount
     if conf.log is not None:
         result_config["LOG"] = conf.log
-    if conf.async_insert is not None:
-        result_config["ASYNC_INSERT"]["ON"] = conf.async_insert
-    if conf.insert_max_data_size is not None:
-        result_config["ASYNC_INSERT"]["MAX_DATA_SIZE"] =\
-            conf.insert_max_data_size
-    if conf.insert_busy_timeout is not None:
-        result_config["ASYNC_INSERT"]["BUSY_TIMEOUT"] =\
-            conf.insert_busy_timeout
 
     return result_config
 
