@@ -254,7 +254,7 @@ class SpectatorTesting:
             (self.last_insertion_time - self.start_insertion_time)
 
         padding = 40
-        print('МЕТРИКИ:\n')
+        print('Metrics:\n')
         print(
             'LIMIT:'.ljust(padding),
             self.configuration['LIMIT'])
@@ -272,13 +272,13 @@ class SpectatorTesting:
             'Total number of rows:'.ljust(padding),
             self.total_user_push, '\n')
         print(
-            'Время на подключение:'.ljust(padding),
+            'Connecting time (s):'.ljust(padding),
             self.stop_connection_time - self.start_connection_time, '\n')
         print(
-            'Средний rps:'.ljust(padding),
+            'Average rps:'.ljust(padding),
             average_rps, '\n')
         print(
-            'Время окончания теста:'.ljust(padding),
+            'Test ended at:'.ljust(padding),
             datetime.datetime.today(), '\n')
 
     def entr_point(self):
@@ -308,7 +308,7 @@ class SpectatorTesting:
 
 def main():
     print(
-        'Время начала теста:'.ljust(40),
+        'Test started at:'.ljust(40),
         datetime.datetime.today(), '\n')
     configuration = read_config()
     test = SpectatorTesting(configuration=configuration)
@@ -318,7 +318,7 @@ def main():
 
 def main_main(configuration):
     print(
-        'Время начала теста:'.ljust(40),
+        'Test started at:'.ljust(40),
         datetime.datetime.today(), '\n')
     test = SpectatorTesting(configuration=configuration)
     test.entr_point()
