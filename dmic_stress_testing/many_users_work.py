@@ -12,7 +12,7 @@ import threading
 import concurrent.futures
 import csv
 from tqdm import tqdm
-import queue
+import heapq
 from dmic_stress_testing.models import screenmarkfact, markfact
 from random import shuffle
 
@@ -34,7 +34,8 @@ class SpectatorTesting:
     # Список пользователей, которые не смогли
     # подключиться к базе за максимальное число попыток
     not_connected_users = []
-    push_q = queue.Queue()
+    push_q = []
+    heapq.heapify(push_q)
 
     # Словарь id: rm.RandUser
     users = {}
@@ -128,6 +129,10 @@ class SpectatorTesting:
             pass
         return False
 
+    def remove_all_heapq(item, h):
+        while item in h:
+            h.remove(item)
+
     def process(self, id):
         self.connected = False
         attempts_counter = 0
@@ -141,6 +146,7 @@ class SpectatorTesting:
         if not self.connected:
             self.not_connected_users.append(id)
             self.connections.pop(id)
+            self.remove_all_heapq(id, self.push_q)
         else:
             self.pbar.update(1)
 
@@ -210,7 +216,7 @@ class SpectatorTesting:
                 self.insertion(id=id, rows=rows)
             self.last_push_time[id] = report_time
         else: 
-            self.push_q.put(id)
+            heapq.heappush(self.push_q, id)
 
     # Запускает цикл по connections для отправки логов
     def loops(self):
@@ -227,12 +233,12 @@ class SpectatorTesting:
                     continue
                 while threading.active_count() > self.configuration["LIMIT"]:
                     continue
-                self.push_q.put(id)
+                heapq.heappush(self.push_q, id)
         self.implement_q()
     
     def implement_q(self):
-        while not self.push_q.empty():
-            self.push_update_one_user(id=self.push_q.get())
+        while not len(self.push_q) == 0:
+            self.push_update_one_user(id=heapq.heappop(self.push_q))
 
     def interval(self):
         self.pbar = tqdm(
