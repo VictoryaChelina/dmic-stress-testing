@@ -181,6 +181,7 @@ class SpectatorTesting:
                 - self.start_insertion_time)
             rps = self.total_user_push / time_from_start
             self.rows_per_second.append(rps)
+            # print(f'rps: {rps}', end='\r')
             
             if self.configuration["LOG"] is not None:
                 self.writer.writerow([time_from_start, self.total_user_push, rps])
@@ -188,7 +189,6 @@ class SpectatorTesting:
         except Exception as ex:
             exception_time = datetime.datetime.today()
             print(f'{exception_time} Exeption "{ex}" accured while pushing rows')
-            print(f'Переподключение {id}')
             self.process(id)  # если ошибка, пробуем переподключить
             self.stop_threading = True
 
