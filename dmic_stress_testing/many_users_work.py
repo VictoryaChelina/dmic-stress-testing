@@ -120,7 +120,8 @@ class SpectatorTesting:
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
                 password=pass_,
-                source_ip=self.configuration['SOURCE_IP'])
+                source_ip=self.configuration['SOURCE_IP'],
+                timeout=300)
             
             self.connections[id] = self.db
             return True
