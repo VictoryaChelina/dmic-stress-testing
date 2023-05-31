@@ -14,6 +14,7 @@ class p_db(Database):
             autocreate=True,
             timeout=60,
             verify_ssl_cert=True,
+            cert=None,
             log_statements=False
             ):
         self.db_name = db_name
@@ -27,6 +28,7 @@ class p_db(Database):
             self.request_session.mount('http://', source_adapter)
 
         self.request_session.verify = verify_ssl_cert
+        self.request_session.cert = cert
         if username:
             self.request_session.auth = (username, password or '')
         self.log_statements = log_statements

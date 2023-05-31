@@ -1,15 +1,15 @@
 {
-    "DB_URL": "http://10.11.20.143:8123",
+    "DB_URL": "https://10.11.20.144:443",
 
     "DB_SCHEME": "original",
 
     "CONNECTION_INTERVAL": 1,
 
-    "ROWS_NUM": 1,
+    "ROWS_NUM": 100,
 
     "D_ROWS": 0,
 
-    "USERS_NUM": 2,
+    "USERS_NUM": 1,
     
     "DEPARTMENT_NUM": 1,
 

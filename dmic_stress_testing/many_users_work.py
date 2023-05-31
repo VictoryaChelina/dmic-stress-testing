@@ -120,12 +120,14 @@ class SpectatorTesting:
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
                 password=pass_,
+                # cert="C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\dmic_stress_testing\\ca.pem",
+                verify_ssl_cert=False,
                 source_ip=self.configuration['SOURCE_IP'])
             
             self.connections[id] = self.db
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
         return False
 
     def process(self, id):
