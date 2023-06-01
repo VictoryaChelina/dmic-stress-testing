@@ -1,21 +1,23 @@
 {
     "DB_URL": "https://dmic.com:443",
 
+    "CRT": "C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\crts\\chain.pem",
+
     "DB_SCHEME": "original",
 
     "CONNECTION_INTERVAL": 1,
 
-    "ROWS_NUM": 100,
+    "ROWS_NUM": 6,
 
     "D_ROWS": 0,
 
-    "USERS_NUM": 1,
+    "USERS_NUM": 1000,
     
-    "DEPARTMENT_NUM": 1,
+    "DEPARTMENT_NUM": 60,
 
     "BATCH_SIZE": 100,
 
-    "PUSH_INT": 0,
+    "PUSH_INT": 60,
 
     "MARK_INTERVAL": 10,
 

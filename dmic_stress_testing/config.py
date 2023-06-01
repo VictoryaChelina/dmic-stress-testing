@@ -2,6 +2,9 @@ configuration = {
     # Адрес Dmic
     "DB_URL": "http://localhost:8123",
 
+    # Адрес Dmic
+    "CRT": "./crts/chain.pem",
+
     # Адрес атакующей машины
     "SOURCE_IP": None,
 

@@ -17,6 +17,11 @@ def parser():
         help='Add database url in http://x.x.x.x:x format.',
     )
     parser.add_argument(
+        '--crt',
+        type=str,
+        help='add path for crt (default - ./crts/chain.pem)',
+    )
+    parser.add_argument(
         '--source_ip',
         type=str,
         help='Add special source ip if there is additionl interfaces in x.x.x.x format.'
@@ -106,9 +111,6 @@ def read_config():
             alter_conf = json.load(file)
             if "DB_URL" not in alter_conf:
                 sys.exit(msg)
-            pattern = "https:\/\/\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}"
-            # if re.match(string=alter_conf["DB_URL"], pattern=pattern) is None:
-            #     sys.exit("Database URL should be in http://x.x.x.x:x format")
             for property, value in alter_conf.items():
                 if type(value) == dict:
                     for prop in value.keys():
@@ -118,6 +120,8 @@ def read_config():
     
     if conf.db is not None:
         result_config["DB_URL"] = conf.db
+    if conf.crt is not None:
+        result_config["CRT"] = conf.crt
     if conf.source_ip is not None:
         result_config["SOURCE_IP"] = conf.source_ip
     if conf.db_scheme is not None:
