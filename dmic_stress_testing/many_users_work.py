@@ -120,8 +120,7 @@ class SpectatorTesting:
                 db_url=self.configuration['DB_URL'],
                 username=uname_,
                 password=pass_,
-                # cert="C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\dmic_stress_testing\\ca.pem",
-                verify_ssl_cert=False,
+                verify_ssl_cert="C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\crts\\chain.pem",
                 source_ip=self.configuration['SOURCE_IP'])
             
             self.connections[id] = self.db

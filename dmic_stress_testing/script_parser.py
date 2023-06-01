@@ -107,8 +107,8 @@ def read_config():
             if "DB_URL" not in alter_conf:
                 sys.exit(msg)
             pattern = "https:\/\/\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}:\d{1,5}"
-            if re.match(string=alter_conf["DB_URL"], pattern=pattern) is None:
-                sys.exit("Database URL should be in http://x.x.x.x:x format")
+            # if re.match(string=alter_conf["DB_URL"], pattern=pattern) is None:
+            #     sys.exit("Database URL should be in http://x.x.x.x:x format")
             for property, value in alter_conf.items():
                 if type(value) == dict:
                     for prop in value.keys():
