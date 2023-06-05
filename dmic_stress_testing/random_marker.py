@@ -20,8 +20,8 @@ class RandUser:
         self.ip = f'{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}.{randint(0, 255)}'
         self.hw = ''.join(choices(ch, k=12))
         self.disk = ''.join(choices(ch, k=20))
-        self.user_name = ''.join(choices(ch, k=randint(1, 50)))
-        self.user_domain = ''.join(choices(ch, k=randint(1, 50)))
+        self.user_name = ''.join(choices(ch, k=randint(1, 64)))
+        self.user_domain = ''.join(choices(ch, k=randint(1, 64)))
         self.marker = generate_marker(
             str(randint(1, 65355)),
             self.disk, self.user_name,
