@@ -4,6 +4,8 @@
     "CRT": "C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\crts\\chain.pem",
 
     "DB_SCHEME": "original",
+    
+    "CONST_ROWS": 1,
 
     "CONNECTION_INTERVAL": 1,
 
@@ -11,9 +13,9 @@
 
     "D_ROWS": 0,
 
-    "USERS_NUM": 10,
+    "USERS_NUM": 1000,
     
-    "DEPARTMENT_NUM": 10,
+    "DEPARTMENT_NUM": 5,
 
     "BATCH_SIZE": 100,
 
@@ -29,6 +31,6 @@
 
     "INTERVAL": "loops",
 
-    "AMOUNT": 500
+    "AMOUNT": 60
 
 }

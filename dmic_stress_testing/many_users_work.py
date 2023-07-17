@@ -154,14 +154,19 @@ class SpectatorTesting:
 
     # Генерация строк
     def gen_rows(self, id, report_time):
-        rows = []
+        row = self.rows_const_part[id]
+        
+        if self.configuration['CONST_ROWS']:
+            rows = [row ] * self.configuration['ROWS_NUM']
+            return rows
 
+        rows = []
         # Время записи в лог на клиенте факта маркирования
         mark_time = report_time
 
         # Интервал между фактами маркирования
         delta = datetime.timedelta(seconds=self.configuration['MARK_INTERVAL'])
-        row = self.rows_const_part[id]
+        
         for i in range(self.configuration['ROWS_NUM'], 0, -1):
             mark_time = report_time - delta * i
             row.dt = mark_time - datetime.timedelta(days=self.configuration['D_ROWS'])
@@ -172,7 +177,8 @@ class SpectatorTesting:
 
     def insertion(self, id, rows):
         try:
-            self.connections[id].insert(rows, self.configuration['ROWS_NUM'])
+            ans = self.connections[id].insert(rows, self.configuration['ROWS_NUM'])
+            #print(ans)
             self.last_insertion_time = perf_counter()
             self.total_user_push += self.configuration['ROWS_NUM']
             self.user_rows_count[id] += self.configuration['ROWS_NUM']
