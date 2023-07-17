@@ -172,7 +172,8 @@ class SpectatorTesting:
 
     def insertion(self, id, rows):
         try:
-            self.connections[id].insert(rows, self.configuration['ROWS_NUM'])
+            ans = self.connections[id].insert(rows, self.configuration['ROWS_NUM'])
+            #print(ans)
             self.last_insertion_time = perf_counter()
             self.total_user_push += self.configuration['ROWS_NUM']
             self.user_rows_count[id] += self.configuration['ROWS_NUM']

@@ -11,9 +11,9 @@
 
     "D_ROWS": 0,
 
-    "USERS_NUM": 10,
+    "USERS_NUM": 1000,
     
-    "DEPARTMENT_NUM": 10,
+    "DEPARTMENT_NUM": 5,
 
     "BATCH_SIZE": 100,
 
@@ -29,6 +29,6 @@
 
     "INTERVAL": "loops",
 
-    "AMOUNT": 500
+    "AMOUNT": 60
 
 }

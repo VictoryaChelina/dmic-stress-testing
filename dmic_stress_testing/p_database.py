@@ -12,7 +12,7 @@ class p_db(Database):
             source_ip=None,
             readonly=False,
             autocreate=True,
-            timeout=60,
+            timeout=180,
             verify_ssl_cert=True,
             cert=None,
             log_statements=False
