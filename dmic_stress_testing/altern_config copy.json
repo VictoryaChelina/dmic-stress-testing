@@ -4,6 +4,8 @@
     "CRT": "C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\crts\\chain.pem",
 
     "DB_SCHEME": "original",
+    
+    "CONST_ROWS": 1,
 
     "CONNECTION_INTERVAL": 1,
 

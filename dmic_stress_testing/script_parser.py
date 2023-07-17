@@ -27,6 +27,11 @@ def parser():
         help='Add special source ip if there is additionl interfaces in x.x.x.x format.'
     )
     parser.add_argument(
+        '--const_rows',
+        type=int,
+        help='Set 1 for constatnt rows from user. 0 - default'
+    )
+    parser.add_argument(
         '--db_scheme',
         type=str,
         choices=['origin', 'changed'],
@@ -124,6 +129,8 @@ def read_config():
         result_config["CRT"] = conf.crt
     if conf.source_ip is not None:
         result_config["SOURCE_IP"] = conf.source_ip
+    if conf.source_ip is not None:
+        result_config["CONST_ROWS"] = conf.const_rows
     if conf.db_scheme is not None:
         result_config["DB_SCHEME"] = conf.db_scheme
     if conf.conn_int is not None:
