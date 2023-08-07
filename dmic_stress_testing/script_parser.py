@@ -12,9 +12,19 @@ def parser():
         help='Add path to your custom config in json format.'
     )
     parser.add_argument(
+        '--https',
+        type=int,
+        help='Flag for https connection instead of http'
+    )
+    parser.add_argument(
         '--db',
         type=str,
         help='Add database url in http://x.x.x.x:x format.',
+    )
+    parser.add_argument(
+        '--t',
+        type=int,
+        help='Add timeout for connection to db',
     )
     parser.add_argument(
         '--crt',
@@ -125,8 +135,12 @@ def read_config():
     
     if conf.db is not None:
         result_config["DB_URL"] = conf.db
+    if conf.t is not None:
+        result_config["T"] = conf.t
     if conf.crt is not None:
         result_config["CRT"] = conf.crt
+    if conf.https is not None:
+        result_config["HTTPS"] = conf.https
     if conf.source_ip is not None:
         result_config["SOURCE_IP"] = conf.source_ip
     if conf.source_ip is not None:

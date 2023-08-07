@@ -114,14 +114,23 @@ class SpectatorTesting:
             department_number = int(user.department)
             uname_ = f'department{department_number:05}'
             pass_ = f'pass{department_number:05}'
-
-            self.db = p_db(
-                'dmic',
-                db_url=self.configuration['DB_URL'],
-                username=uname_,
-                password=pass_,
-                verify_ssl_cert=self.configuration['CRT'],
-                source_ip=self.configuration['SOURCE_IP'])
+            if self.configuration['HTTPS']: 
+                self.db = p_db(
+                    'dmic',
+                    timeout=self.configuration['T'],
+                    db_url=self.configuration['DB_URL'],
+                    username=uname_,
+                    password=pass_,
+                    verify_ssl_cert=self.configuration['CRT'],
+                    source_ip=self.configuration['SOURCE_IP'])
+            else:
+                self.db = p_db(
+                    'dmic',
+                    timeout=self.configuration['T'],
+                    db_url=self.configuration['DB_URL'],
+                    username=uname_,
+                    password=pass_,
+                    source_ip=self.configuration['SOURCE_IP'])
             self.connections[id] = self.db
             return True
         except Exception:
