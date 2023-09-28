@@ -133,8 +133,8 @@ class SpectatorTesting:
                     source_ip=self.configuration['SOURCE_IP'])
             self.connections[id] = self.db
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            print(e)
         return False
 
     def process(self, id):

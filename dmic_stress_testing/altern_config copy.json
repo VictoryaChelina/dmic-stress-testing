@@ -1,9 +1,9 @@
 {
-    "DB_URL": "http://10.10.35.140:8123",
+    "DB_URL": "https://lb.dmic-demo.com:8123",
 
-    "HTTPS": 0,
+    "HTTPS": 1,
 
-    "CRT": "C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\crts\\chain.pem",
+    "CRT": "C:\\Users\\v.chelina\\stress_test\\dmic-stress-testing\\dmic-hap-chain-cert.pem",
 
     "DB_SCHEME": "original",
     
@@ -11,19 +11,19 @@
 
     "CONNECTION_INTERVAL": 1,
 
-    "ROWS_NUM": 1,
+    "ROWS_NUM": 6,
 
     "D_ROWS": 0,
 
-    "USERS_NUM": 1,
+    "USERS_NUM": 1000,
     
-    "DEPARTMENT_NUM": 1,
+    "DEPARTMENT_NUM": 10,
 
     "BATCH_SIZE": 100,
 
-    "PUSH_INT": 1,
+    "PUSH_INT": 60,
 
-    "MARK_INTERVAL": 1,
+    "MARK_INTERVAL": 10,
 
     "MAX_CONNECTION_ATTEMPTS": 10,
 
@@ -33,6 +33,6 @@
 
     "INTERVAL": "loops",
 
-    "AMOUNT": 1
+    "AMOUNT": 30
 
 }
