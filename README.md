@@ -19,12 +19,12 @@ pip install https://gitlab.ispras.ru/watermarking/dm-marker-generator
 2) Install this package with
 
 ```
-pip install git+https://gitlab.ispras.ru/watermarking/dmic-stress-testing.git
+pip install dmic-stress-testing
 ```
 
 ## Usage
 
-Независимо от системы нужно увеличить количество динамических tcp портов.
+Независимо от системы нужно увеличить количество динамических tcp портов. (Если необходимо запустить больше 28к пользователей)
 Это можно сделать при помощи следующих команд в терминале:
 
 На винде:
@@ -94,6 +94,7 @@ make-stress --config altern_config.json --rows 34
 
 make-stress --crt <путь к цепочке сертификатов> --db https://dmic.com:443 
 ```
+adress хоста нужно прописать в /etc/hosts или c:\windows\system32\drivers\etc\hosts
 
 Также есть отдельная команды для проверки числа строк в базе - `check`; и команда запрашивающая от кликхауса число partioins - `partitions`. Последнюю необходимо запустить в отдельном терминале перед началом тестирования, а после окончания тестирования прервать ctrl+c и получить график.
 
