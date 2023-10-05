@@ -15,9 +15,9 @@
 
     "D_ROWS": 0,
 
-    "USERS_NUM": 1000,
+    "USERS_NUM": 100,
     
-    "DEPARTMENT_NUM": 10,
+    "DEPARTMENT_NUM": 12,
 
     "BATCH_SIZE": 100,
 
